@@ -6,13 +6,17 @@ tomorrow where it left off today.
 
 ## Try it live
 
-```
-GET /trigger
-```
+| | URL |
+|---|---|
+| Landing page (demo entrypoint) | https://qte77.github.io/2026-08-26-AgentNativeHack-FT-CF-SF/ |
+| Worker (live episode) | https://agent-native-hack.cloudflare-driveway392.workers.dev/trigger |
+| Agent card | https://agent-native-hack.cloudflare-driveway392.workers.dev/.well-known/ai-agent.json |
+| Checkpoint feed | https://agent-native-hack.cloudflare-driveway392.workers.dev/checkpoints |
 
-Runs one full episode against real signals, right now, with no setup — that's the "it runs"
-gate: an unbriefed judge can hit this URL and watch it happen. See `/.well-known/ai-agent.json`
-for the agent card, `/checkpoints` for prior episodes.
+Click the landing page's button, or `GET /trigger` directly — either runs one full episode
+against real signals, right now, with no setup. That's the "it runs" gate: an unbriefed judge
+can hit this and watch it happen. The landing page is static (GitHub Pages) and calls the Worker
+client-side; it doesn't replace it.
 
 No live deploy URL yet? Reproduce a committed episode deterministically, offline, no network:
 
@@ -50,7 +54,20 @@ cp .dev.vars.example .dev.vars   # fill in AISA_API_KEY / GITHUB_TOKEN to go liv
 npm run dev                       # wrangler dev, fully local, no Cloudflare login needed
 npm run typecheck
 npm run test
+npm run replay                    # or: make install|dev|typecheck|test|replay|deploy
 ```
+
+`npm run deploy` (or `make deploy`) needs `wrangler login` first (`--device` works in
+containers/remote sessions where the localhost OAuth callback can't be reached).
+
+### Environment variables
+
+| Name | Where | Required | Effect if unset |
+|---|---|---|---|
+| `GITHUB_TOKEN` | `.dev.vars` (local) / `wrangler secret put GITHUB_TOKEN` (deployed) | no | Unauthenticated GitHub calls (low rate limit); Dependabot-alerts signal reports "unavailable" |
+| `AISA_API_KEY` | `.dev.vars` (local) / `wrangler secret put AISA_API_KEY` (deployed) | no | `aisaReceipt.mode` stays `"dry-run"` (deterministic heuristic, no live call) instead of `"live"` |
+| `COTAL_TOKEN` | `.dev.vars` / `wrangler secret put COTAL_TOKEN` | no | No effect yet — Cotal publish is a documented no-op regardless (see below) |
+| `TARGET_REPO_OWNER`, `TARGET_REPO_NAME`, `AISA_MODEL` | `wrangler.jsonc` `vars` | — | Non-secret config, already set |
 
 ## Docs
 
