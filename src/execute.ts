@@ -17,6 +17,17 @@ function ghHeaders(token: string): HeadersInit {
   };
 }
 
+// A 2xx response with a non-JSON body must not throw unhandled - every step
+// here is supposed to degrade to a documented no-op, matching the pattern
+// already used in signals.ts's safeGet and aisa.ts's decideGoal.
+async function safeJson<T>(res: Response): Promise<T | null> {
+  try {
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
 async function createIssue(
   owner: string,
   repo: string,
@@ -38,13 +49,54 @@ async function createIssue(
   if (!res.ok) {
     return { mode: "no-op", issueUrl: null, issueNumber: null, detail: `issue creation failed (HTTP ${res.status})` };
   }
-  const created = (await res.json()) as { html_url: string; number: number };
+  const created = await safeJson<{ html_url: string; number: number }>(res);
+  if (!created) {
+    return { mode: "no-op", issueUrl: null, issueNumber: null, detail: `issue response not valid JSON on ${owner}/${repo}` };
+  }
   return {
     mode: "live",
     issueUrl: created.html_url,
     issueNumber: created.number,
     detail: `created issue #${created.number} on ${owner}/${repo}`,
   };
+}
+
+function toBase64Utf8(text: string): string {
+  return btoa(unescape(encodeURIComponent(text)));
+}
+
+// Commits an actual file to the counterparty repo (not just an issue) - real,
+// browsable file-tree content, one file per episode, under requests/.
+async function commitRequestFile(
+  owner: string,
+  repo: string,
+  episodeId: string,
+  goal: string,
+  issueUrl: string | null,
+  token: string,
+  fetchImpl: typeof fetch,
+): Promise<string> {
+  const path = `requests/${episodeId}.md`;
+  const body = [
+    `# Request from idle-discovery episode ${episodeId}`,
+    "",
+    `Goal: ${goal}`,
+    "",
+    issueUrl ? `Issue opened here: ${issueUrl}` : "",
+    `Source: https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const res = await fetchImpl(`${GITHUB_API}/repos/${owner}/${repo}/contents/${path}`, {
+    method: "PUT",
+    headers: ghHeaders(token),
+    body: JSON.stringify({
+      message: `Request from episode ${episodeId}`,
+      content: toBase64Utf8(body),
+    }),
+  });
+  if (!res.ok) return `file commit failed (HTTP ${res.status}) on ${owner}/${repo}/${path}`;
+  return `committed ${path} on ${owner}/${repo}`;
 }
 
 async function readIssue(
@@ -58,7 +110,8 @@ async function readIssue(
     headers: ghHeaders(token),
   });
   if (!res.ok) return `verification fetch failed (HTTP ${res.status}) on ${owner}/${repo}`;
-  const json = (await res.json()) as { state: string };
+  const json = await safeJson<{ state: string }>(res);
+  if (!json) return `verification response not valid JSON on ${owner}/${repo}`;
   return `issue #${issueNumber} confirmed present on ${owner}/${repo}, state=${json.state}`;
 }
 
@@ -66,6 +119,7 @@ async function readIssue(
 // GitHub issue on this repo AND a second one on an independently-maintained
 // counterparty repo - instead of only recording the decision internally.
 export async function executeGoal(
+  episodeId: string,
   goal: string,
   owner: string,
   repo: string,
@@ -85,7 +139,16 @@ export async function executeGoal(
     createIssue(owner, repo, goal, token, fetchImpl),
     createIssue(COUNTERPARTY_OWNER, COUNTERPARTY_REPO, goal, token, fetchImpl),
   ]);
-  return { ...self, counterparty };
+  const fileDetail = await commitRequestFile(
+    COUNTERPARTY_OWNER,
+    COUNTERPARTY_REPO,
+    episodeId,
+    goal,
+    counterparty.issueUrl,
+    token,
+    fetchImpl,
+  );
+  return { ...self, counterparty: { ...counterparty, detail: `${counterparty.detail}; ${fileDetail}` } };
 }
 
 // Checking: read both executions back rather than trust the write responses -
