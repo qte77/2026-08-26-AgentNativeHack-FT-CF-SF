@@ -70,6 +70,19 @@ async function route(request: Request, env: Env): Promise<Response> {
       return handleMcp(request, env);
     }
 
+    if (url.pathname === "/mcp" && request.method === "GET") {
+      // A human clicking the "MCP server" link in README/landing-page tables
+      // would otherwise 404 - this is a real MCP client's endpoint (POST
+      // JSON-RPC), not a browsable page, so say that instead of 404ing.
+      return json({
+        hint: "This is an MCP JSON-RPC 2.0 endpoint - POST to it, don't GET it.",
+        example: {
+          method: "POST",
+          body: { jsonrpc: "2.0", id: 1, method: "tools/list" },
+        },
+      });
+    }
+
     if (url.pathname === "/trigger" && (request.method === "GET" || request.method === "POST")) {
       const id = crypto.randomUUID();
       const startedAt = new Date().toISOString();
