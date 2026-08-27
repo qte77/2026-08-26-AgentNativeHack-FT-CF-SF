@@ -13,6 +13,7 @@ tomorrow where it left off today.
 | Agent card | https://agent-native-hack.cloudflare-driveway392.workers.dev/.well-known/ai-agent.json |
 | Checkpoint feed | https://agent-native-hack.cloudflare-driveway392.workers.dev/checkpoints |
 | MCP server (agent plug-in) | https://agent-native-hack.cloudflare-driveway392.workers.dev/mcp |
+| Counterparty repo (org2) | https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2 |
 
 Click the landing page's button, or `GET /trigger` directly — either runs one full episode
 against real signals, right now, with no setup. That's the "it runs" gate: an unbriefed judge
@@ -38,9 +39,11 @@ npm install && npm run replay
    failure: the agent reads the next open row from this project's own
    [remaining-work table](docs/plans/0001-agent-native-hackathon-submission.md) and works on
    itself instead of idling or crashing.
-4. **Execute** — the decided goal becomes a real GitHub issue (`src/execute.ts`), not just an
-   internal record. Then **check**: the issue is read back to confirm it actually landed, rather
-   than trusting the write response.
+4. **Execute** — the decided goal becomes a real GitHub issue on this repo, and a second one on
+   [`2026-08-26-AgentNativeHack-FT-CF-SF-org2`](https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2),
+   an independently-maintained counterparty repo (`src/execute.ts`) — not just an internal record.
+   Then **check**: both issues are read back to confirm they actually landed, rather than trusting
+   the write responses.
 5. **Checkpoint** every episode (`src/checkpoint.ts`) so a skeptical judge can replay it later,
    byte-for-byte, with zero live calls (`npm run replay`).
 
@@ -53,6 +56,53 @@ the only client interface is a persistent NATS+JetStream connection, which a sta
 request can't hold without a Durable Object bridge. Rather than fake that integration, the
 judge-visible `/checkpoints` feed carries the coordination-visibility story instead. Full
 reasoning: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-submission.md).
+
+## Architecture, boundaries, and data flow
+
+```
+  Human, browser              Agent, MCP client
+  ──────────────►             ──────────────►
+  click "Run a live episode"  POST /mcp (JSON-RPC)
+       │                            │
+       ▼                            ▼
+  ┌───────────────────┐      ┌─────────────────────────────────┐
+  │ GitHub Pages        │────►│  Cloudflare Worker                │
+  │ docs/index.html     │     │  index.ts (router)                │
+  │ static, CORS fetch  │     │  episode.ts (orchestrator)        │
+  └───────────────────┘      └───┬─────┬─────┬─────┬─────────────┘
+                                  │     │     │     │
+              (1) signals.ts     │     │     │     │  (4) execute.ts
+        ┌─────────────────────────┘     │     │     │
+        │ read: Actions status,         │     │     │
+        │ Dependabot, edit-hotspot      │     │     │
+        ▼                               │     │     ▼
+  ══════════════════════╗               │     │  ══════════════════════════╗
+  ║ GitHub REST API      ║◄──────────────┘     │  ║ GitHub REST API (write)   ║
+  ║ (real boundary #1)   ║◄─────────────────────┼──║ - this repo               ║
+  ══════════════════════╝                      │  ║ - org2 (counterparty repo)║
+              (2) aisa.ts                       │  ══════════════════════════╝
+        ┌─────────────────────────────────────────┘
+        │ one metered chat/completions call        (3) backlog.ts, on NONE:
+        ▼                                           reads this repo's own plan.md
+  ══════════════════════╗                           for the next open row
+  ║ AIsa api.aisa.one    ║                           (self-referential fallback)
+  ║ (real boundary #2,   ║
+  ║  real $ receipt)     ║
+  ══════════════════════╝
+
+                          (5) checkpoint.ts
+                          ┌─────────────────────────┐
+                          │  Workers KV                │
+                          │  episode history            │
+                          │  /checkpoints, /replay      │
+                          └─────────────────────────┘
+
+  Cotal (in progress, not yet live) would sit alongside execute.ts, publishing
+  episode summaries to a mesh other agents/humans can watch at hack.cotal.ai/graph
+  - planned to run on a persistent Tenki sandbox once mesh login is confirmed.
+
+  ══════ = a real external system this build does not own (the "boundary")
+```
 
 ## Observe, analyze, test — for agents
 
@@ -73,9 +123,10 @@ reasoning: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-subm
   use case, a diagram marking exactly which edges are real external-system boundaries, and a live
   checkpoint timeline.
 - **Analyze**: click through to the [source repo](https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF)
-  and its [Issues tab](https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF/issues) —
-  every issue there was opened by the agent itself, not a person, as real, checkable evidence of
-  execution.
+  and its [Issues tab](https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF/issues), or the
+  [counterparty repo's issues](https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2/issues) —
+  every issue in both was opened by the agent itself, not a person, as real, checkable evidence of
+  execution across two independent repos.
 - **Test**: click "Run a live episode" on the landing page and watch it happen in real time.
 - **Onboarding**: none needed. One URL, one button, no signup.
 
