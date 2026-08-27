@@ -35,6 +35,8 @@ describe("renderEpisode replay determinism", () => {
         "",
         "Execution: mode=no-op",
         "  no GITHUB_TOKEN bound - execution skipped, goal recorded only",
+        "  counterparty (org2): mode=no-op",
+        "    no GITHUB_TOKEN bound - execution skipped, goal recorded only",
         "Check: verified=false",
         "  nothing to verify (no-op execution)",
         "",

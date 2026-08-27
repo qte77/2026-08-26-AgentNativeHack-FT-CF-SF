@@ -35,7 +35,13 @@
     "mode": "no-op",
     "issueUrl": null,
     "issueNumber": null,
-    "detail": "no GITHUB_TOKEN bound - execution skipped, goal recorded only"
+    "detail": "no GITHUB_TOKEN bound - execution skipped, goal recorded only",
+    "counterparty": {
+      "mode": "no-op",
+      "issueUrl": null,
+      "issueNumber": null,
+      "detail": "no GITHUB_TOKEN bound - execution skipped, goal recorded only"
+    }
   },
   "check": {
     "verified": false,

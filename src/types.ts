@@ -34,11 +34,15 @@ export interface CotalResult {
   detail: string;
 }
 
-export interface ExecutionResult {
+export interface SingleTargetResult {
   mode: "live" | "no-op";
   issueUrl: string | null;
   issueNumber: number | null;
   detail: string;
+}
+
+export interface ExecutionResult extends SingleTargetResult {
+  counterparty: SingleTargetResult;
 }
 
 export interface CheckResult {
