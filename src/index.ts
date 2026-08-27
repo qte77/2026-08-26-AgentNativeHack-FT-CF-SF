@@ -39,6 +39,19 @@ const AGENT_CARD = {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
+    try {
+      return await route(request, env);
+    } catch (err) {
+      // Any uncaught error here would otherwise fall through to Cloudflare's
+      // default error page, which has no CORS header - silently breaking the
+      // GitHub Pages landing page's cross-origin fetch (caught by a live
+      // browser-driven E2E pass, not visible from a plain same-origin check).
+      return json({ error: "internal error", detail: String(err) }, 500);
+    }
+  },
+};
+
+async function route(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === "/.well-known/ai-agent.json") {
@@ -78,5 +91,4 @@ export default {
     }
 
     return json({ error: "not found", hint: "see /.well-known/ai-agent.json" }, 404);
-  },
-};
+}
