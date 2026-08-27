@@ -1,5 +1,6 @@
 import { runEpisode } from "./episode";
 import { writeCheckpoint, readCheckpoint, listCheckpointIds, renderEpisode } from "./checkpoint";
+import { handleMcp } from "./mcp";
 import type { Env } from "./types";
 
 function json(data: unknown, status = 200): Response {
@@ -20,11 +21,17 @@ const AGENT_CARD = {
     "Internal-track submission: an agent that wakes with no queued task, self-selects one goal " +
     "from bounded live signals via an AIsa-metered call, coordinates over the Cotal mesh, and " +
     "checkpoints every episode for offline replay.",
-  agent_surface: "HTTP API",
+  agent_surface: "MCP server",
   endpoints: {
     trigger: "/trigger",
     checkpoints: "/checkpoints",
     checkpoint_by_id: "/checkpoints/{id}",
+    mcp: "/mcp",
+  },
+  mcp: {
+    url: "https://agent-native-hack.cloudflare-driveway392.workers.dev/mcp",
+    transport: "json-rpc-2.0-over-http",
+    tools: ["run_idle_discovery_episode"],
   },
   track: "internal",
   repo: "https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF",
@@ -44,6 +51,10 @@ export default {
         hint: "GET or POST /trigger to run one live episode. It runs the real signal-collection, " +
           "AIsa-decision, and checkpoint-write path - judge-triggerable, no hand-holding.",
       });
+    }
+
+    if (url.pathname === "/mcp" && request.method === "POST") {
+      return handleMcp(request, env);
     }
 
     if (url.pathname === "/trigger" && (request.method === "GET" || request.method === "POST")) {
