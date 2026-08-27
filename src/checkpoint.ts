@@ -46,6 +46,8 @@ export function renderEpisode(episode: Episode): string {
     "",
     `Execution: mode=${episode.execution.mode}`,
     `  ${episode.execution.detail}`,
+    `  counterparty (org2): mode=${episode.execution.counterparty.mode}`,
+    `    ${episode.execution.counterparty.detail}`,
     `Check: verified=${episode.check.verified}`,
     `  ${episode.check.detail}`,
     "",
