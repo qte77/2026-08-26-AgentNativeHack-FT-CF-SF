@@ -54,6 +54,31 @@ request can't hold without a Durable Object bridge. Rather than fake that integr
 judge-visible `/checkpoints` feed carries the coordination-visibility story instead. Full
 reasoning: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-submission.md).
 
+## Observe, analyze, test — for agents
+
+- **Observe**: `GET /.well-known/ai-agent.json` (agent card) and `GET /checkpoints` (episode
+  history) — zero auth, zero setup.
+- **Analyze**: `GET /checkpoints/{id}` returns the full episode — every signal read, the AIsa
+  request/response, the decision, the GitHub issue written, and its read-back confirmation.
+- **Test**: `POST /mcp` with `{"method":"tools/list"}` to discover `run_idle_discovery_episode`,
+  then `{"method":"tools/call","params":{"name":"run_idle_discovery_episode","arguments":{}}}`
+  to actually run one — a real callable tool, not just a clickable button. `GET /trigger` does
+  the same over plain HTTP if MCP isn't convenient.
+- **Onboarding**: none needed. No credential, no signup, no local install — an agent with nothing
+  but this domain can discover and call the full surface cold.
+
+## Observe, analyze, test — for humans
+
+- **Observe**: the [landing page](https://qte77.github.io/2026-08-26-AgentNativeHack-FT-CF-SF/) —
+  use case, a diagram marking exactly which edges are real external-system boundaries, and a live
+  checkpoint timeline.
+- **Analyze**: click through to the [source repo](https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF)
+  and its [Issues tab](https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF/issues) —
+  every issue there was opened by the agent itself, not a person, as real, checkable evidence of
+  execution.
+- **Test**: click "Run a live episode" on the landing page and watch it happen in real time.
+- **Onboarding**: none needed. One URL, one button, no signup.
+
 ## Development
 
 ```
