@@ -44,12 +44,16 @@ export function renderEpisode(episode: Episode): string {
     `  source: ${episode.decision.source}`,
     `  reasoning: ${episode.decision.reasoning}`,
     "",
-    `Execution: mode=${episode.execution.mode}`,
-    `  ${episode.execution.detail}`,
-    `  counterparty (org2): mode=${episode.execution.counterparty.mode}`,
-    `    ${episode.execution.counterparty.detail}`,
-    `Check: verified=${episode.check.verified}`,
-    `  ${episode.check.detail}`,
+    // Optional chaining: older checkpoints, written before execution/check
+    // existed, are still stored in KV and still need to render without
+    // throwing - a schema-mismatch 500 silently breaks CORS on this route
+    // (see the top-level error wrapper in index.ts for why that matters).
+    `Execution: mode=${episode.execution?.mode ?? "unknown (older checkpoint schema)"}`,
+    `  ${episode.execution?.detail ?? "n/a"}`,
+    `  counterparty (org2): mode=${episode.execution?.counterparty?.mode ?? "unknown (older checkpoint schema)"}`,
+    `    ${episode.execution?.counterparty?.detail ?? "n/a"}`,
+    `Check: verified=${episode.check?.verified ?? false}`,
+    `  ${episode.check?.detail ?? "n/a"}`,
     "",
     `Cotal coordination: mode=${episode.cotal.mode}`,
     `  ${episode.cotal.detail}`,
