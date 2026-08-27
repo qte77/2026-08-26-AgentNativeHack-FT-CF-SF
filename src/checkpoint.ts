@@ -1,21 +1,28 @@
 import type { Episode } from "./types";
 
-export function checkpointKey(id: string): string {
-  return `episode:${id}`;
+// Keyed as episode:<startedAt-ISO>|<id> so KV's lexicographic key ordering
+// is also chronological order - UUIDs alone sort randomly, which silently
+// broke "most recent" ordering in /checkpoints (caught by live E2E check).
+export function checkpointKey(id: string, startedAt: string): string {
+  return `episode:${startedAt}|${id}`;
 }
 
 export async function writeCheckpoint(kv: KVNamespace, episode: Episode): Promise<void> {
-  await kv.put(checkpointKey(episode.id), JSON.stringify(episode, null, 2));
+  await kv.put(checkpointKey(episode.id, episode.startedAt), JSON.stringify(episode, null, 2));
 }
 
 export async function readCheckpoint(kv: KVNamespace, id: string): Promise<Episode | null> {
-  const raw = await kv.get(checkpointKey(id));
+  const { keys } = await kv.list({ prefix: "episode:" });
+  const match = keys.find((k) => k.name.endsWith(`|${id}`));
+  if (!match) return null;
+  const raw = await kv.get(match.name);
   return raw ? (JSON.parse(raw) as Episode) : null;
 }
 
 export async function listCheckpointIds(kv: KVNamespace, limit = 20): Promise<string[]> {
-  const { keys } = await kv.list({ prefix: "episode:", limit });
-  return keys.map((k) => k.name.replace(/^episode:/, ""));
+  const { keys } = await kv.list({ prefix: "episode:" });
+  const sortedNames = keys.map((k) => k.name).sort();
+  return sortedNames.slice(-limit).map((name) => name.slice(name.indexOf("|") + 1));
 }
 
 // Pure function of a committed Episode - no network, no clock, no randomness.
