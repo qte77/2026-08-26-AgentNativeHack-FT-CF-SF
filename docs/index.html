@@ -48,6 +48,27 @@
   a { color: var(--accent); }
   .links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; font-size: 0.9rem; }
   .row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+  h2 { font-size: 1rem; margin: 0 0 0.75rem; color: var(--text); }
+  .diagram { display: flex; flex-direction: column; gap: 0; font-size: 0.85rem; }
+  .node {
+    background: #0d1017; border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.6rem 0.9rem; align-self: flex-start;
+  }
+  .node.ours { border-color: #3a4152; }
+  .edge {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0 0.45rem 1.1rem;
+    border-left: 1px dashed var(--border); margin-left: 0.9rem; color: var(--muted); font-size: 0.8rem;
+  }
+  .edge.boundary { border-left: 2px solid var(--warn); color: var(--warn); font-weight: 600; }
+  .edge .tag {
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+    background: rgba(244,192,94,0.12); border: 1px solid var(--warn); border-radius: 4px;
+    padding: 0.05rem 0.4rem; white-space: nowrap;
+  }
+  .timeline { list-style: none; margin: 0; padding: 0; font-size: 0.85rem; }
+  .timeline li { padding: 0.5rem 0; border-bottom: 1px solid var(--border); color: var(--muted); }
+  .timeline li:last-child { border-bottom: none; }
+  .timeline .goal { color: var(--text); }
 </style>
 </head>
 <body>
@@ -59,6 +80,37 @@
     for one goal (or NONE, falling back to its own open backlog), and checkpoints the episode
     for deterministic offline replay.
   </p>
+
+  <div class="card">
+    <h2>Real-world use case</h2>
+    <p style="margin:0">
+      A <strong>repo-health janitor</strong>: a scheduled agent that checks a codebase's cheap
+      signals — CI status, security alerts, code churn — and either proposes one well-reasoned
+      fix or works down a known backlog, leaving every decision checkpointed for offline audit.
+      Deployable nightly across a team's repos, catching drift nobody has bandwidth to manually
+      triage, with a replayable paper trail for "why did it suggest this?" — useful anywhere
+      audit/compliance matters, not just as a demo.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>System boundaries — what's ours vs. what's real and external</h2>
+    <p style="margin:0 0 1rem; color:var(--muted)">
+      The internal track asks for "real work across systems it does not own." The
+      <span style="color:var(--warn)">amber</span> edges below are the two places this agent
+      actually leaves its own infrastructure and depends on a system neither we nor this
+      hackathon control.
+    </p>
+    <div class="diagram">
+      <div class="node ours">This repo / GitHub Pages + Cloudflare Worker (ours)</div>
+      <div class="edge boundary"><span class="tag">boundary</span> reads — GitHub REST API (a platform we don't own)</div>
+      <div class="node ours">3 bounded signals: CI status · security alerts · edit-hotspot</div>
+      <div class="edge boundary"><span class="tag">boundary</span> calls — AIsa (api.aisa.one), real metered spend, receipt captured</div>
+      <div class="node ours">One goal, or NONE → falls back to this repo's own open-work plan</div>
+      <div class="edge">writes</div>
+      <div class="node ours">Checkpoint (Workers KV) — ours, but replayable + auditable offline</div>
+    </div>
+  </div>
 
   <div class="card">
     <p style="margin-top:0">
@@ -79,6 +131,11 @@
   </div>
 
   <pre id="output" style="display:none"></pre>
+
+  <div class="card">
+    <h2>Checkpoint timeline</h2>
+    <ul id="timeline" class="timeline"><li>loading…</li></ul>
+  </div>
 
   <div class="card">
     <strong>Links</strong>
@@ -122,11 +179,40 @@
   }
 
   triggerBtn.addEventListener("click", () =>
-    run(triggerBtn, "/trigger", (data) => data.rendered)
+    run(triggerBtn, "/trigger", (data) => data.rendered).then(loadTimeline)
   );
   listBtn.addEventListener("click", () =>
     run(listBtn, "/checkpoints", (data) => JSON.stringify(data, null, 2))
   );
+
+  async function loadTimeline() {
+    const timelineEl = document.getElementById("timeline");
+    try {
+      const listRes = await fetch(WORKER + "/checkpoints");
+      const { ids } = await listRes.json();
+      const recent = ids.slice(-8).reverse();
+      if (recent.length === 0) {
+        timelineEl.innerHTML = "<li>no episodes yet — click \"Run a live episode\" above</li>";
+        return;
+      }
+      const episodes = await Promise.all(
+        recent.map((id) => fetch(WORKER + "/checkpoints/" + id).then((r) => r.json()))
+      );
+      const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      }[c]));
+      timelineEl.innerHTML = episodes
+        .map(({ episode }) => {
+          const when = new Date(episode.startedAt).toLocaleString();
+          const source = episode.decision.source === "aisa" ? "AIsa decision" : "backlog fallback";
+          return `<li>${esc(when)} — <span class="goal">${esc(episode.decision.goal)}</span> <em>(${esc(source)})</em></li>`;
+        })
+        .join("");
+    } catch (err) {
+      timelineEl.innerHTML = "<li>failed to load: " + err.message + "</li>";
+    }
+  }
+  loadTimeline();
 </script>
 </body>
 </html>
