@@ -2,6 +2,7 @@ import { collectSignals } from "./signals";
 import { decideGoal } from "./aisa";
 import { publishToMesh } from "./cotal";
 import { fallbackGoalFromPlan } from "./backlog";
+import { executeGoal, checkExecution } from "./execute";
 import type { Env, Episode, GoalDecision } from "./types";
 
 export interface RunEpisodeParams {
@@ -44,7 +45,22 @@ export async function runEpisode({ id, startedAt, env, fetchImpl = fetch }: RunE
     };
   }
 
+  const execution = await executeGoal(
+    decision.goal,
+    env.TARGET_REPO_OWNER,
+    env.TARGET_REPO_NAME,
+    env.GITHUB_TOKEN,
+    fetchImpl,
+  );
+  const check = await checkExecution(
+    execution,
+    env.TARGET_REPO_OWNER,
+    env.TARGET_REPO_NAME,
+    env.GITHUB_TOKEN,
+    fetchImpl,
+  );
+
   const cotal = await publishToMesh(env.COTAL_TOKEN);
 
-  return { id, startedAt, signals, aisaReceipt, decision, cotal };
+  return { id, startedAt, signals, aisaReceipt, decision, execution, check, cotal };
 }

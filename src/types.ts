@@ -34,11 +34,25 @@ export interface CotalResult {
   detail: string;
 }
 
+export interface ExecutionResult {
+  mode: "live" | "no-op";
+  issueUrl: string | null;
+  issueNumber: number | null;
+  detail: string;
+}
+
+export interface CheckResult {
+  verified: boolean;
+  detail: string;
+}
+
 export interface Episode {
   id: string;
   startedAt: string;
   signals: Signal[];
   aisaReceipt: AisaReceipt;
   decision: GoalDecision;
+  execution: ExecutionResult;
+  check: CheckResult;
   cotal: CotalResult;
 }
