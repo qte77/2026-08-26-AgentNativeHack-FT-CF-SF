@@ -12,6 +12,7 @@ tomorrow where it left off today.
 | Worker (live episode) | https://agent-native-hack.cloudflare-driveway392.workers.dev/trigger |
 | Agent card | https://agent-native-hack.cloudflare-driveway392.workers.dev/.well-known/ai-agent.json |
 | Checkpoint feed | https://agent-native-hack.cloudflare-driveway392.workers.dev/checkpoints |
+| MCP server (agent plug-in) | https://agent-native-hack.cloudflare-driveway392.workers.dev/mcp |
 
 Click the landing page's button, or `GET /trigger` directly — either runs one full episode
 against real signals, right now, with no setup. That's the "it runs" gate: an unbriefed judge
@@ -37,8 +38,15 @@ npm install && npm run replay
    failure: the agent reads the next open row from this project's own
    [remaining-work table](docs/plans/0001-agent-native-hackathon-submission.md) and works on
    itself instead of idling or crashing.
-4. **Checkpoint** every episode (`src/checkpoint.ts`) so a skeptical judge can replay it later,
+4. **Execute** — the decided goal becomes a real GitHub issue (`src/execute.ts`), not just an
+   internal record. Then **check**: the issue is read back to confirm it actually landed, rather
+   than trusting the write response.
+5. **Checkpoint** every episode (`src/checkpoint.ts`) so a skeptical judge can replay it later,
    byte-for-byte, with zero live calls (`npm run replay`).
+
+Other agents can plug in directly at `/mcp` (JSON-RPC 2.0: `initialize`, `tools/list`,
+`tools/call`) instead of only clicking a button — `run_idle_discovery_episode` is a real callable
+tool, discoverable with no auth or setup.
 
 Cotal mesh coordination is documented as a deliberate no-op for now — `docs.cotal.ai` confirms
 the only client interface is a persistent NATS+JetStream connection, which a stateless Worker
