@@ -46,6 +46,7 @@ export async function runEpisode({ id, startedAt, env, fetchImpl = fetch }: RunE
   }
 
   const execution = await executeGoal(
+    id,
     decision.goal,
     env.TARGET_REPO_OWNER,
     env.TARGET_REPO_NAME,
