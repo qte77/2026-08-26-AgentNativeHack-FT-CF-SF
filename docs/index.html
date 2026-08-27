@@ -108,9 +108,9 @@
       <div class="edge boundary"><span class="tag">boundary</span> calls — AIsa (api.aisa.one), real metered spend, receipt captured</div>
       <div class="node ours">One goal, or NONE → falls back to this repo's own open-work plan</div>
       <div class="edge">writes + verifies</div>
-      <div class="node ours">GitHub issue on this repo, and one on
+      <div class="node ours">GitHub issue + file on this repo, and on
         <a href="https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2" target="_blank" rel="noopener">org2</a>
-        (independent counterparty repo)</div>
+        (independent counterparty repo, with its <strong>own</strong> reactive Actions agent)</div>
       <div class="edge">checkpoints</div>
       <div class="node ours">Workers KV — ours, but replayable + auditable offline</div>
     </div>
@@ -152,7 +152,11 @@
                           │  /checkpoints, /replay      │
                           └─────────────────────────┘
 
-  ══════ = a real external system this build does not own (the "boundary")</pre>
+  ══════ = a real external system this build does not own (the "boundary")
+
+  Cotal (in progress) — a Tenki sandbox has cotal installed + logged in, ready to
+  publish episode summaries to hack.cotal.ai/graph via scripts/cotal-bridge.sh -
+  blocked on a mesh-operator ACL grant, not on architecture.</pre>
   </div>
 
   <div class="card">
@@ -164,6 +168,7 @@
       <li>Observes GitHub Actions status, open Dependabot alerts, and edit-frequency hotspots on this repo</li>
       <li>One AIsa-gated LLM call (<code>qwen-flash</code>) decides a goal or says NONE</li>
       <li>NONE falls back to the next open row in the project's own plan — a designed branch, not a failure</li>
+      <li>Executes the goal as a real GitHub issue here and on org2 (an independent counterparty repo with its own reactive agent), each read back to confirm it landed</li>
       <li>Writes a checkpoint you can replay offline later, byte-for-byte</li>
     </ol>
     <div class="row">
