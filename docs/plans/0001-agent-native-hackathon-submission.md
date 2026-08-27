@@ -1,5 +1,11 @@
 # Plan 0001 — Agent Natives Builders Hackathon submission
 
+**Live deployment (for submission form fields):**
+`demo_url` = `https://agent-native-hack.cloudflare-driveway392.workers.dev` — `GET /trigger` runs
+one live episode, `GET /checkpoints` lists prior ones, `GET /.well-known/ai-agent.json` is the
+agent card. `agent_surface` = "HTTP API". `repo_url` =
+`https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF`.
+
 ## Context
 
 Event: Agent Native Builders Hackathon, Aug 26-27, Cloudflare HQ SF (venue only — Cloudflare is
@@ -255,8 +261,8 @@ INTERNAL TRACK -- idle wake -> self-selected goal -> Cotal-mesh coordination -> 
 | ~~6~~ | ~~Verify Mitosis Labs' actual product surface~~ | agent | **Done — confirmed via mitosislabs.ai: real product (Cortex), but no builder credits/self-serve path for this event — do not build a live dependency on it** |
 | ~~7~~ | ~~Build the core loop: Worker/agent implementing idle-discovery (bounded GH-signals → AIsa-gated decision → NONE-fallback to this plan's own open rows → checkpoint)~~ | agent | **Done (PR #3) — `wrangler dev` smoke-tested locally end-to-end against real GitHub API calls: `/`, `/.well-known/ai-agent.json`, `/trigger`, `/checkpoints`. `npm run typecheck`/`test`/`replay` all green, CI green.** |
 | 7a | Cotal coordination-visibility wiring | agent | **Descoped for now — `docs.cotal.ai/build-a-client.md` confirms NATS+JetStream-only, no HTTP/webhook path; a stateless Worker request can't hold a persistent NATS connection without a Durable Object bridge (real build risk this close to the lock). Coordination-design story currently rests on `/checkpoints` as the judge-visible artifact instead. Revisit only if time remains after rows 7b–10.** |
-| 7b | Deploy the Worker to Cloudflare for real (currently only verified via local `wrangler dev`) | owner then agent | Owner runs `wrangler login` (or `npx wrangler login`); agent runs `wrangler deploy`, updates the KV namespace id in `wrangler.jsonc` from a real `wrangler kv namespace create CHECKPOINTS`, and re-verifies `/trigger` against the live URL |
-| 7c | Wire a live AIsa key (owner confirmed $100 balance on aisa.one) | owner then agent | Owner drops the key into a local `.dev.vars` (git-ignored) or runs `wrangler secret put AISA_API_KEY` for the deployed Worker; agent re-runs `/trigger` and confirms `aisaReceipt.mode === "live"` in the response |
+| ~~7b~~ | ~~Deploy the Worker to Cloudflare for real~~ | owner then agent | **Done — live at https://agent-native-hack.cloudflare-driveway392.workers.dev. `wrangler login --device` (RFC 8628) used after the localhost-callback OAuth flow timed out in this container; real `CHECKPOINTS` KV namespace created and wired; `GITHUB_TOKEN` deployed as a secret, piped in directly, never displayed.** |
+| ~~7c~~ | ~~Wire a live AIsa key~~ | owner then agent | **Done — owner-provided key uploaded via `wrangler secret put AISA_API_KEY` (piped from `.dev.vars`, never displayed). Confirmed live: a real `/trigger` call against the deployed URL returned `aisaReceipt.mode: "live"` with a genuine model-generated goal ("Increase documentation for the src directory...") reasoning from real edit-frequency data.** |
 | 8 | Rehearse the full live demo at least once, cold, before presenting to judges | owner+agent | One complete run succeeds with no intervention |
 | 9 | Register team / confirm team status | owner | Still unconfirmed as of this update ("we got enrolled" only) — `ic_hack_team_*` or web-form equivalent confirmed done |
 | 10 | Submit — via `/events/hackathon/apply` web form (no token needed) or `ic_hack_submit` (needs a minted token, scopes freeze at mint) | owner | `repo_url`, `demo_url`, `agent_surface`, `title`, `blurb` all filled and confirmed received |
