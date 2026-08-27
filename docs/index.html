@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Idle-Discovery Agent</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #0b0d12;
+    --panel: #12151c;
+    --border: #262b36;
+    --text: #e7e9ee;
+    --muted: #8b93a3;
+    --accent: #5fb3ff;
+    --good: #5ed99b;
+    --warn: #f4c05e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 2rem 1.25rem 4rem;
+  }
+  main { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin: 0 0 0.25rem; }
+  .sub { color: var(--muted); margin: 0 0 1.75rem; }
+  .track { display: inline-block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 0.15rem 0.6rem; margin-bottom: 0.75rem; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
+  .steps { margin: 0; padding-left: 1.1rem; color: var(--muted); }
+  .steps li { margin-bottom: 0.35rem; }
+  button {
+    background: var(--accent); color: #04101c; border: none; border-radius: 8px;
+    padding: 0.7rem 1.2rem; font-size: 1rem; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+  pre {
+    background: #05070a; border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+    font-size: 0.85rem; color: var(--good);
+  }
+  .status { font-size: 0.85rem; color: var(--muted); margin-top: 0.6rem; }
+  .status.error { color: #ff8a8a; }
+  a { color: var(--accent); }
+  .links { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; font-size: 0.9rem; }
+  .row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+</style>
+</head>
+<body>
+<main>
+  <span class="track">Internal track</span>
+  <h1>Idle-Discovery Agent</h1>
+  <p class="sub">
+    Wakes with no queued task, reads three bounded live signals from its own repo, asks AIsa
+    for one goal (or NONE, falling back to its own open backlog), and checkpoints the episode
+    for deterministic offline replay.
+  </p>
+
+  <div class="card">
+    <p style="margin-top:0">
+      This is a live judge-triggerable demo. Click the button below and the browser calls the
+      real deployed Worker directly — no server-side proxy, nothing pre-recorded.
+    </p>
+    <ol class="steps">
+      <li>Observes GitHub Actions status, open Dependabot alerts, and edit-frequency hotspots on this repo</li>
+      <li>One AIsa-gated LLM call (<code>qwen-flash</code>) decides a goal or says NONE</li>
+      <li>NONE falls back to the next open row in the project's own plan — a designed branch, not a failure</li>
+      <li>Writes a checkpoint you can replay offline later, byte-for-byte</li>
+    </ol>
+    <div class="row">
+      <button id="trigger">Run a live episode</button>
+      <button id="list" class="secondary">List recent checkpoints</button>
+    </div>
+    <div id="status" class="status"></div>
+  </div>
+
+  <pre id="output" style="display:none"></pre>
+
+  <div class="card">
+    <strong>Links</strong>
+    <div class="links">
+      <a href="https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF" target="_blank" rel="noopener">Source repo</a>
+      <a href="https://agent-native-hack.cloudflare-driveway392.workers.dev/.well-known/ai-agent.json" target="_blank" rel="noopener">Agent card</a>
+      <a href="https://agent-native-hack.cloudflare-driveway392.workers.dev/checkpoints" target="_blank" rel="noopener">Raw checkpoint feed</a>
+      <a href="plans/0001-agent-native-hackathon-submission.md" target="_blank" rel="noopener">Design + open-work plan</a>
+    </div>
+  </div>
+</main>
+
+<script>
+  const WORKER = "https://agent-native-hack.cloudflare-driveway392.workers.dev";
+  const statusEl = document.getElementById("status");
+  const outputEl = document.getElementById("output");
+  const triggerBtn = document.getElementById("trigger");
+  const listBtn = document.getElementById("list");
+
+  function setStatus(text, isError) {
+    statusEl.textContent = text;
+    statusEl.className = "status" + (isError ? " error" : "");
+  }
+
+  async function run(btn, path, render) {
+    btn.disabled = true;
+    outputEl.style.display = "none";
+    setStatus("calling " + path + " ...");
+    try {
+      const res = await fetch(WORKER + path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      outputEl.textContent = render(data);
+      outputEl.style.display = "block";
+      setStatus("done - " + new Date().toLocaleTimeString());
+    } catch (err) {
+      setStatus("failed: " + err.message, true);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  triggerBtn.addEventListener("click", () =>
+    run(triggerBtn, "/trigger", (data) => data.rendered)
+  );
+  listBtn.addEventListener("click", () =>
+    run(listBtn, "/checkpoints", (data) => JSON.stringify(data, null, 2))
+  );
+</script>
+</body>
+</html>

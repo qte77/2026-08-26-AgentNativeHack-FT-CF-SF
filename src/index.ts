@@ -5,7 +5,12 @@ import type { Env } from "./types";
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data, null, 2), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8" },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      // Allows the GitHub Pages landing page (a different origin) to call
+      // /trigger and /checkpoints directly from the browser.
+      "access-control-allow-origin": "*",
+    },
   });
 }
 
