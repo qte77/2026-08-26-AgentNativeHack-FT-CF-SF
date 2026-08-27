@@ -1,9 +1,11 @@
 # Plan 0001 — Agent Natives Builders Hackathon submission
 
-**Live deployment (for submission form fields):**
-`demo_url` = `https://agent-native-hack.cloudflare-driveway392.workers.dev` — `GET /trigger` runs
-one live episode, `GET /checkpoints` lists prior ones, `GET /.well-known/ai-agent.json` is the
-agent card. `agent_surface` = "HTTP API". `repo_url` =
+**Live deployment (matches the actual submitted `ic_hack_submit` state — see
+[`docs/submission.md`](../submission.md) for the captured API response):**
+`demo_url` = `https://qte77.github.io/2026-08-26-AgentNativeHack-FT-CF-SF/` (landing page; the
+Worker itself is `https://agent-native-hack.cloudflare-driveway392.workers.dev` — `GET /trigger`
+runs one live episode, `GET /checkpoints` lists prior ones, `GET /.well-known/ai-agent.json` is the
+agent card, `POST /mcp` is the JSON-RPC surface). `agent_surface` = "MCP server". `repo_url` =
 `https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF`.
 
 ## Context
@@ -243,11 +245,9 @@ INTERNAL TRACK -- idle wake -> self-selected goal -> Cotal-mesh coordination -> 
   research-restraint citations, the Cotal-fits-internal-not-external reasoning, the "one track, one
   candidate" recommendation) is already captured in this plan or in `docs/hackathon-brief.md`. Fully
   superseded, confirmed, removed — not recoverable via git (the file was untracked).
-- **No code has been written in this repo.** `.git` + `README.md` (title only) + `docs/` is the
-  entire repo as of this plan.
-- Nothing has been submitted. No team/token status was confirmed beyond "we got enrolled" (owner's
-  words) — whether that includes an existing team registration or just application approval was
-  never disambiguated.
+- ~~No code has been written in this repo.~~ **Stale as of the build — see the remaining-work
+  table below for what shipped.** This line is left here only as a historical marker of the
+  plan's starting point, not a current-state claim.
 
 ## Remaining-work table (SINGLE source of open work)
 
@@ -260,38 +260,31 @@ INTERNAL TRACK -- idle wake -> self-selected goal -> Cotal-mesh coordination -> 
 | ~~5~~ | ~~Walk Cotal's `/connect` + `/device` flow end-to-end~~ | agent | **Done — CONFIRMED buildable/demo-able, no hidden blocker (an earlier "inconclusive" report in this same session was wrong — a too-short render timeout, corrected on retry). `/graph` is fully public, no login wall — a judge can view it with zero setup, and shows a real empty-state message confirming the mesh is live. Fastest path: `/agents` — "boots a sandbox, installs the standard CLI, enrols an agent... takes about two minutes" — zero local setup. Alternative: the 5-step `/connect` laptop CLI (`curl get.cotal.ai \| sh` → `cotal setup --yes` → `cotal meshes add` → `cotal login` → approve at `/device`). Either path needs creating/joining a team + one `cotal login`/`/device` code-approval step (a real account action, not just viewing — not attempted by the read-only exploration). One doc correction: the event-specific flow uses `cotal setup --yes` (connects directly to the already-hosted mesh) — simpler than the general product docs' `cotal-ai setup --yes && cotal-ai up --detach` (which provisions a local broker); don't use the general-docs command for this event.** |
 | ~~6~~ | ~~Verify Mitosis Labs' actual product surface~~ | agent | **Done — confirmed via mitosislabs.ai: real product (Cortex), but no builder credits/self-serve path for this event — do not build a live dependency on it** |
 | ~~7~~ | ~~Build the core loop: Worker/agent implementing idle-discovery (bounded GH-signals → AIsa-gated decision → NONE-fallback to this plan's own open rows → checkpoint)~~ | agent | **Done (PR #3) — `wrangler dev` smoke-tested locally end-to-end against real GitHub API calls: `/`, `/.well-known/ai-agent.json`, `/trigger`, `/checkpoints`. `npm run typecheck`/`test`/`replay` all green, CI green.** |
-| 7a | Cotal coordination-visibility wiring | agent | **Descoped for now — `docs.cotal.ai/build-a-client.md` confirms NATS+JetStream-only, no HTTP/webhook path; a stateless Worker request can't hold a persistent NATS connection without a Durable Object bridge (real build risk this close to the lock). Coordination-design story currently rests on `/checkpoints` as the judge-visible artifact instead. Revisit only if time remains after rows 7b–10.** |
+| 7a | Cotal coordination-visibility wiring | agent then owner | **Superseded — the "stateless Worker can't hold a persistent NATS connection" limitation is solved: a persistent Tenki cloud sandbox (id `01a0457e-...`) has `cotal` CLI installed, mesh `hack` registered, and login succeeded (`qte@ist-einmalig.de`, session cached to 2026-09-03). `scripts/cotal-bridge.sh` is written and tested against real live `/checkpoints` data. The one remaining block: `cotal send msg` fails with `NATS permission denied ... check this endpoint's ACLs` — this account has no publish rights on the mesh yet. Fix is `cotal actor grant cli --sub oW8kEuuV9NajVc8tTrUmojUKBHuougLz`, but that command can only be run by **the mesh's operator** (a hackathon/Cotal organizer) — not self-serviceable. Coordination-design story still rests on `/checkpoints` + `org2`'s own agent in the meantime.** |
 | ~~7b~~ | ~~Deploy the Worker to Cloudflare for real~~ | owner then agent | **Done — live at https://agent-native-hack.cloudflare-driveway392.workers.dev. `wrangler login --device` (RFC 8628) used after the localhost-callback OAuth flow timed out in this container; real `CHECKPOINTS` KV namespace created and wired; `GITHUB_TOKEN` deployed as a secret, piped in directly, never displayed.** |
 | ~~7c~~ | ~~Wire a live AIsa key~~ | owner then agent | **Done — owner-provided key uploaded via `wrangler secret put AISA_API_KEY` (piped from `.dev.vars`, never displayed). Confirmed live: a real `/trigger` call against the deployed URL returned `aisaReceipt.mode: "live"` with a genuine model-generated goal ("Increase documentation for the src directory...") reasoning from real edit-frequency data.** |
 | ~~8~~ | ~~Rehearse the full live demo at least once, cold, before presenting to judges~~ | owner+agent | **Done — repeatedly verified live and unattended across this session (multiple `/trigger` calls, all succeeding cold with `aisaReceipt.mode: "live"`). Owner should still click through the GH Pages landing page once themselves before presenting, to confirm the button UX end-to-end from a fresh browser.** |
 | ~~9~~ | ~~Register team / confirm team status~~ | owner | **Done — real root cause found: the `signup-with-agent` device-code flow was reusing an already-logged-in browser session under the wrong identity. Fixed by re-approving in a fresh session as `staioneffe@protonmail.com` (the email on the Cloudflare builder list) — `ic_hack_me` then returned `registered: true, role: {roles: ["participant"]}`. Team `nolim` (`t_eae57647f38568ec`) created via `ic_hack_team_create`. NDA signed via `ic_hack_sign_nda` at 2026-08-27T21:23:04Z.** |
 | ~~10~~ | ~~Submit the solution~~ | owner then agent | **Done, API-confirmed — `ic_hack_submit` returned `ok: true` at 2026-08-27T21:22:53Z (not just a human's belief it worked: the actual JSON response was read and is quoted in this session). `agent_surface: "MCP server"`, all fields per the "Live deployment" line above. Idempotent/overwrite-until-lock — safe to resubmit if anything material changes before 22:00 UTC.** |
 | ~~10a~~ | ~~Upgrade `agent_surface` from generic value before submitting~~ | agent | **Done — built a real MCP server (`src/mcp.ts`, `/mcp` JSON-RPC 2.0 endpoint, `run_idle_discovery_episode` tool) rather than A2A (A2A's exact JSON-RPC binding couldn't be pinned down confidently in the time available; MCP could be, since this session used MCP heavily against the hackathon's own platform all day). Submitted with `agent_surface: "MCP server"`.** |
+| ~~11~~ | ~~Real cross-repo execution~~ | agent | **Done — `src/execute.ts` writes a real GitHub issue to this repo AND to an independently-maintained counterparty repo ([`org2`](https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2)), plus a real committed file under `org2`'s `requests/`, all read back to confirm they landed. `org2` also has its own independent GitHub Actions agent (`.github/workflows/respond.yml` + `scripts/respond.mjs`) that reacts to incoming requests using only its own Actions-provided `GITHUB_TOKEN` — two real, separately-authenticated systems, not one agent narrating both sides.** |
+| ~~12~~ | ~~Live E2E verification, not just plain HTTP checks~~ | agent | **Done — a browser-driven pass (polyfetch-scrape, real Chromium) against the deployed landing page caught 3 real bugs, all fixed and redeployed: checkpoint keys sorting lexicographically by UUID instead of chronologically; an uncaught exception anywhere falling through to Cloudflare's CORS-less default error page; older pre-schema-change checkpoints 500ing on read. Also fixed: `GET /mcp` 404'd even though it's presented as a clickable link.** |
 
-## Known blockers / open risks (not yet resolved)
+## Known blockers / open risks (current, not resolved)
 
-- **Deadline is resolved and independently cross-checked (2026-08-27, 3:00 PM PT / 10:00 PM UTC)** —
-  matches the event page's own "3:00pm Thursday, August 27" exactly (2026-08-27 is confirmed a
-  Thursday; no discrepancy). The sharpest remaining risk is #1: no track decision yet, and the clock
-  is real, fixed, and running out today.
-- **Given how little time is left, the honest recommendation carried over unchanged from the earlier
-  candidate analysis still holds: pick ONE track, ONE candidate, built to actually satisfy the "it
-  runs, judge-triggered live" gate — that gate zeroes the score regardless of everything else.
-  Prioritize a working, simple loop over an ambitious, fragile one.**
-- **AIsa's payment mechanism was live-tested this session with the real, provided key — risk
-  downgraded from "unconfirmed" to "confirmed real, one step short of a completed settlement."**
-  Bearer-key chat completions work now (free-tier models only — the account needs a top-up for paid
-  models). The x402 no-registration path returned a genuine HTTP 402 challenge with real terms
-  ($0.008 USDC, 11 chains) — the protocol is live, not Private-Beta-as-in-broken. What's still
-  missing before relying on it live in front of judges: an actual completed settlement, which needs
-  a funded on-chain wallet and a human doing the signing (deliberately not attempted by the agent —
-  see plan row 3 and the source-map API-key note below).
-- Runtype and Mitosis Labs are now both independently verified against their own sites (see rows 4
-  and 6, done) — same rigor already applied to AIsa/Tenki/Cotal. Mitosis Labs' verification
-  surfaced a new constraint: no builder credits/self-serve path exists for it at all, so it's
-  unsuitable as a live dependency regardless of which track is picked.
-- Cotal's actual join/auth mechanics: nav structure and underlying tech stack (NATS+JetStream, MCP
-  tool catalog) both confirmed directly against docs.cotal.ai; the `/connect`+`/device` flow itself
-  still has not been walked end-to-end.
-- No team/submission status has been confirmed beyond "we got enrolled" — whether a team already
-  exists, or whether that's still an open step, needs an owner answer before #9/#10 can start.
+Superseded items (deadline framing, track decision, team/submission status, Runtype/Mitosis
+verification) have been removed from this section — they're closed, tracked only in the struck
+rows above, per this repo's own rule against two lists of open work drifting apart.
+
+- **Cotal mesh publish is ACL-blocked, not architecture-blocked** — see row 7a. Needs a mesh
+  operator to run `cotal actor grant cli --sub oW8kEuuV9NajVc8tTrUmojUKBHuougLz`; not
+  self-serviceable by the agent or the owner alone.
+- **AIsa real settlement remains one step short by design, not by omission** — the Bearer-key
+  free-tier call is genuinely live (confirmed repeatedly), but completing an actual paid
+  settlement (topping up the balance, or signing an x402 EIP-712 authorization with a funded
+  wallet) needs the owner's own financial/signing action. The agent will not handle a private key
+  for real fund movement — a standing boundary, not a time-pressure call.
+- **The submission's `updated_at` (2026-08-27T22:58:09Z) is after the stated 22:00 UTC deadline** —
+  `ic_hack_submit` returned `ok: true` with no deadline-related error, and the record shows
+  `locked: false`, so it was accepted; flagging the timing discrepancy honestly rather than
+  omitting it. See [`docs/submission.md`](../submission.md).

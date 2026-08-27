@@ -39,11 +39,14 @@ npm install && npm run replay
    failure: the agent reads the next open row from this project's own
    [remaining-work table](docs/plans/0001-agent-native-hackathon-submission.md) and works on
    itself instead of idling or crashing.
-4. **Execute** — the decided goal becomes a real GitHub issue on this repo, and a second one on
+4. **Execute** — the decided goal becomes a real GitHub issue on this repo, and a real issue plus
+   a committed file on
    [`2026-08-26-AgentNativeHack-FT-CF-SF-org2`](https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2),
    an independently-maintained counterparty repo (`src/execute.ts`) — not just an internal record.
-   Then **check**: both issues are read back to confirm they actually landed, rather than trusting
-   the write responses.
+   `org2` has its **own** independent GitHub Actions agent that reacts on its own (comments on the
+   issue, logs to its own `PROCESSED.md`) using only its own Actions-provided `GITHUB_TOKEN` — two
+   separately-authenticated systems, not one agent narrating both sides. Then **check**: every
+   write is read back to confirm it actually landed, rather than trusting the write responses.
 5. **Checkpoint** every episode (`src/checkpoint.ts`) so a skeptical judge can replay it later,
    byte-for-byte, with zero live calls (`npm run replay`).
 
@@ -51,11 +54,12 @@ Other agents can plug in directly at `/mcp` (JSON-RPC 2.0: `initialize`, `tools/
 `tools/call`) instead of only clicking a button — `run_idle_discovery_episode` is a real callable
 tool, discoverable with no auth or setup.
 
-Cotal mesh coordination is documented as a deliberate no-op for now — `docs.cotal.ai` confirms
-the only client interface is a persistent NATS+JetStream connection, which a stateless Worker
-request can't hold without a Durable Object bridge. Rather than fake that integration, the
-judge-visible `/checkpoints` feed carries the coordination-visibility story instead. Full
-reasoning: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-submission.md).
+Cotal mesh coordination is a documented no-op in the Worker itself, but real progress exists
+outside it: a persistent Tenki cloud sandbox has `cotal` installed, the `hack` mesh registered, and
+login succeeded — `cotal send msg` is written and tested (`scripts/cotal-bridge.sh`), but blocked
+on a mesh-operator ACL grant this account doesn't have yet. Not an architecture limit anymore, a
+permissions one. `/checkpoints` plus `org2`'s own reactive agent carry the coordination-visibility
+story in the meantime. Full detail: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-submission.md) row 7a.
 
 ## Architecture, boundaries, and data flow
 
@@ -97,9 +101,9 @@ reasoning: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-subm
                           │  /checkpoints, /replay      │
                           └─────────────────────────┘
 
-  Cotal (in progress, not yet live) would sit alongside execute.ts, publishing
-  episode summaries to a mesh other agents/humans can watch at hack.cotal.ai/graph
-  - planned to run on a persistent Tenki sandbox once mesh login is confirmed.
+  Cotal (in progress) — a Tenki sandbox has cotal installed + logged in, ready to
+  publish episode summaries to hack.cotal.ai/graph via scripts/cotal-bridge.sh -
+  blocked on a mesh-operator ACL grant, not on architecture.
 
   ══════ = a real external system this build does not own (the "boundary")
 ```
