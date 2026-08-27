@@ -33,6 +33,11 @@ describe("renderEpisode replay determinism", () => {
         "  reasoning: no live signal was actionable (a designed branch, not a failure) - " +
           "falling back to the next open row in this project's own remaining-work table",
         "",
+        "Execution: mode=no-op",
+        "  no GITHUB_TOKEN bound - execution skipped, goal recorded only",
+        "Check: verified=false",
+        "  nothing to verify (no-op execution)",
+        "",
         "Cotal coordination: mode=no-op",
         "  no COTAL_TOKEN bound - coordination publish skipped (see docs/plans/0001-... row 5: " +
           "/connect+/device flow not yet completed)",

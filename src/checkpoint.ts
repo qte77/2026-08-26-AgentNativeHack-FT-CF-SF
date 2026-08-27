@@ -37,6 +37,11 @@ export function renderEpisode(episode: Episode): string {
     `  source: ${episode.decision.source}`,
     `  reasoning: ${episode.decision.reasoning}`,
     "",
+    `Execution: mode=${episode.execution.mode}`,
+    `  ${episode.execution.detail}`,
+    `Check: verified=${episode.check.verified}`,
+    `  ${episode.check.detail}`,
+    "",
     `Cotal coordination: mode=${episode.cotal.mode}`,
     `  ${episode.cotal.detail}`,
   ];
