@@ -107,9 +107,52 @@
       <div class="node ours">3 bounded signals: CI status · security alerts · edit-hotspot</div>
       <div class="edge boundary"><span class="tag">boundary</span> calls — AIsa (api.aisa.one), real metered spend, receipt captured</div>
       <div class="node ours">One goal, or NONE → falls back to this repo's own open-work plan</div>
-      <div class="edge">writes</div>
-      <div class="node ours">Checkpoint (Workers KV) — ours, but replayable + auditable offline</div>
+      <div class="edge">writes + verifies</div>
+      <div class="node ours">GitHub issue on this repo, and one on
+        <a href="https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2" target="_blank" rel="noopener">org2</a>
+        (independent counterparty repo)</div>
+      <div class="edge">checkpoints</div>
+      <div class="node ours">Workers KV — ours, but replayable + auditable offline</div>
     </div>
+
+    <pre style="margin-top:1rem">  Human, browser              Agent, MCP client
+  ──────────────►             ──────────────►
+  click "Run a live episode"  POST /mcp (JSON-RPC)
+       │                            │
+       ▼                            ▼
+  ┌───────────────────┐      ┌─────────────────────────────────┐
+  │ GitHub Pages        │────►│  Cloudflare Worker                │
+  │ docs/index.html     │     │  index.ts (router)                │
+  │ static, CORS fetch  │     │  episode.ts (orchestrator)        │
+  └───────────────────┘      └───┬─────┬─────┬─────┬─────────────┘
+                                  │     │     │     │
+              (1) signals.ts     │     │     │     │  (4) execute.ts
+        ┌─────────────────────────┘     │     │     │
+        │ read: Actions status,         │     │     │
+        │ Dependabot, edit-hotspot      │     │     │
+        ▼                               │     │     ▼
+  ══════════════════════╗               │     │  ══════════════════════════╗
+  ║ GitHub REST API      ║◄──────────────┘     │  ║ GitHub REST API (write)   ║
+  ║ (real boundary #1)   ║◄─────────────────────┼──║ - this repo               ║
+  ══════════════════════╝                      │  ║ - org2 (counterparty repo)║
+              (2) aisa.ts                       │  ══════════════════════════╝
+        ┌─────────────────────────────────────────┘
+        │ one metered chat/completions call        (3) backlog.ts, on NONE:
+        ▼                                           reads this repo's own plan.md
+  ══════════════════════╗                           for the next open row
+  ║ AIsa api.aisa.one    ║                           (self-referential fallback)
+  ║ (real boundary #2,   ║
+  ║  real $ receipt)     ║
+  ══════════════════════╝
+
+                          (5) checkpoint.ts
+                          ┌─────────────────────────┐
+                          │  Workers KV                │
+                          │  episode history            │
+                          │  /checkpoints, /replay      │
+                          └─────────────────────────┘
+
+  ══════ = a real external system this build does not own (the "boundary")</pre>
   </div>
 
   <div class="card">
@@ -141,7 +184,9 @@
     <strong>Links</strong>
     <div class="links">
       <a href="https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF" target="_blank" rel="noopener">Source repo</a>
+      <a href="https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2" target="_blank" rel="noopener">Counterparty repo (org2)</a>
       <a href="https://agent-native-hack.cloudflare-driveway392.workers.dev/.well-known/ai-agent.json" target="_blank" rel="noopener">Agent card</a>
+      <a href="https://agent-native-hack.cloudflare-driveway392.workers.dev/mcp" target="_blank" rel="noopener">MCP server</a>
       <a href="https://agent-native-hack.cloudflare-driveway392.workers.dev/checkpoints" target="_blank" rel="noopener">Raw checkpoint feed</a>
       <a href="plans/0001-agent-native-hackathon-submission.md" target="_blank" rel="noopener">Design + open-work plan</a>
     </div>
