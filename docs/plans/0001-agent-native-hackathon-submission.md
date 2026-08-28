@@ -8,6 +8,58 @@ runs one live episode, `GET /checkpoints` lists prior ones, `GET /.well-known/ai
 agent card, `POST /mcp` is the JSON-RPC surface). `agent_surface` = "MCP server". `repo_url` =
 `https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF`.
 
+## Architecture detail
+
+README.md and the landing page both carry only a minimal 6-box diagram now — this is the
+step-by-step version with file names, kept in exactly one place on purpose (a hand-synced copy of
+this same diagram is what caused README's and the landing page's copies to drift out of sync with
+each other earlier in the build).
+
+```
+  Human, browser              Agent, MCP client
+  ──────────────►             ──────────────►
+  click "Run a live episode"  POST /mcp (JSON-RPC)
+       │                            │
+       ▼                            ▼
+  ┌───────────────────┐      ┌─────────────────────────────────┐
+  │ GitHub Pages        │────►│  Cloudflare Worker                │
+  │ docs/index.html     │     │  index.ts (router)                │
+  │ static, CORS fetch  │     │  episode.ts (orchestrator)        │
+  └───────────────────┘      └───┬─────┬─────┬─────┬─────────────┘
+                                  │     │     │     │
+              (1) signals.ts     │     │     │     │  (4) execute.ts
+        ┌─────────────────────────┘     │     │     │
+        │ read: Actions status,         │     │     │
+        │ Dependabot, edit-hotspot      │     │     │
+        ▼                               │     │     ▼
+  ══════════════════════╗               │     │  ══════════════════════════╗
+  ║ GitHub REST API      ║◄──────────────┘     │  ║ GitHub REST API (write)   ║
+  ║ (real boundary #1)   ║◄─────────────────────┼──║ - this repo               ║
+  ══════════════════════╝                      │  ║ - org2 (counterparty repo)║
+              (2) aisa.ts                       │  ══════════════════════════╝
+        ┌─────────────────────────────────────────┘
+        │ one metered chat/completions call        (3) backlog.ts, on NONE:
+        ▼                                           reads this repo's own plan.md
+  ══════════════════════╗                           for the next open row
+  ║ AIsa api.aisa.one    ║                           (self-referential fallback)
+  ║ (real boundary #2,   ║
+  ║  real $ receipt)     ║
+  ══════════════════════╝
+
+                          (5) checkpoint.ts
+                          ┌─────────────────────────┐
+                          │  Workers KV                │
+                          │  episode history            │
+                          │  /checkpoints, /replay      │
+                          └─────────────────────────┘
+
+  Cotal (in progress) — a Tenki sandbox has cotal installed + logged in, ready to
+  publish episode summaries to hack.cotal.ai/graph via scripts/cotal-bridge.sh -
+  blocked on a mesh-operator ACL grant, not on architecture (see row 7a below).
+
+  ══════ = a real external system this build does not own (the "boundary")
+```
+
 ## Context
 
 Event: Agent Native Builders Hackathon, Aug 26-27, Cloudflare HQ SF (venue only — Cloudflare is
