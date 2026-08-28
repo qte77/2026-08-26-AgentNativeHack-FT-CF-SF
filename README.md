@@ -61,52 +61,35 @@ on a mesh-operator ACL grant this account doesn't have yet. Not an architecture 
 permissions one. `/checkpoints` plus `org2`'s own reactive agent carry the coordination-visibility
 story in the meantime. Full detail: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-submission.md) row 7a.
 
-## Architecture, boundaries, and data flow
+## Architecture
 
 ```
-  Human, browser              Agent, MCP client
-  ──────────────►             ──────────────►
-  click "Run a live episode"  POST /mcp (JSON-RPC)
-       │                            │
-       ▼                            ▼
-  ┌───────────────────┐      ┌─────────────────────────────────┐
-  │ GitHub Pages        │────►│  Cloudflare Worker                │
-  │ docs/index.html     │     │  index.ts (router)                │
-  │ static, CORS fetch  │     │  episode.ts (orchestrator)        │
-  └───────────────────┘      └───┬─────┬─────┬─────┬─────────────┘
-                                  │     │     │     │
-              (1) signals.ts     │     │     │     │  (4) execute.ts
-        ┌─────────────────────────┘     │     │     │
-        │ read: Actions status,         │     │     │
-        │ Dependabot, edit-hotspot      │     │     │
-        ▼                               │     │     ▼
-  ══════════════════════╗               │     │  ══════════════════════════╗
-  ║ GitHub REST API      ║◄──────────────┘     │  ║ GitHub REST API (write)   ║
-  ║ (real boundary #1)   ║◄─────────────────────┼──║ - this repo               ║
-  ══════════════════════╝                      │  ║ - org2 (counterparty repo)║
-              (2) aisa.ts                       │  ══════════════════════════╝
-        ┌─────────────────────────────────────────┘
-        │ one metered chat/completions call        (3) backlog.ts, on NONE:
-        ▼                                           reads this repo's own plan.md
-  ══════════════════════╗                           for the next open row
-  ║ AIsa api.aisa.one    ║                           (self-referential fallback)
-  ║ (real boundary #2,   ║
-  ║  real $ receipt)     ║
-  ══════════════════════╝
-
-                          (5) checkpoint.ts
-                          ┌─────────────────────────┐
-                          │  Workers KV                │
-                          │  episode history            │
-                          │  /checkpoints, /replay      │
-                          └─────────────────────────┘
-
-  Cotal (in progress) — a Tenki sandbox has cotal installed + logged in, ready to
-  publish episode summaries to hack.cotal.ai/graph via scripts/cotal-bridge.sh -
-  blocked on a mesh-operator ACL grant, not on architecture.
-
-  ══════ = a real external system this build does not own (the "boundary")
+     Human                Agent
+       │                    │
+       ▼                    ▼
+  ┌─────────────────────────────┐
+  │      Cloudflare Worker         │
+  │    (idle-discovery agent)      │
+  └────────────┬────────────┬─────┘
+               │            │
+               ▼            ▼
+        ┌───────────┐ ┌───────────┐
+        │  GitHub    │ │  AIsa      │  ← real boundaries
+        │ [external] │ │ [external] │     (systems this
+        └─────┬─────┘ └───────────┘      build does not own)
+              │
+              ▼
+        ┌───────────┐
+        │  org2       │
+        │ (own agent) │
+        └───────────┘
 ```
+
+A human clicks a button on the [landing page](https://qte77.github.io/2026-08-26-AgentNativeHack-FT-CF-SF/);
+an agent calls `/mcp` — both reach the same Worker. It reads real signals from GitHub, asks AIsa
+for a real metered decision, then executes that decision as real writes on both this repo and
+`org2` (an independently-maintained counterparty with its own reactive agent). Full step-by-step
+breakdown with file names and the in-progress Cotal path: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-submission.md#architecture-detail).
 
 ## Observe, analyze, test — for agents
 

@@ -114,49 +114,11 @@
       <div class="edge">checkpoints</div>
       <div class="node ours">Workers KV — ours, but replayable + auditable offline</div>
     </div>
-
-    <pre style="margin-top:1rem">  Human, browser              Agent, MCP client
-  ──────────────►             ──────────────►
-  click "Run a live episode"  POST /mcp (JSON-RPC)
-       │                            │
-       ▼                            ▼
-  ┌───────────────────┐      ┌─────────────────────────────────┐
-  │ GitHub Pages        │────►│  Cloudflare Worker                │
-  │ docs/index.html     │     │  index.ts (router)                │
-  │ static, CORS fetch  │     │  episode.ts (orchestrator)        │
-  └───────────────────┘      └───┬─────┬─────┬─────┬─────────────┘
-                                  │     │     │     │
-              (1) signals.ts     │     │     │     │  (4) execute.ts
-        ┌─────────────────────────┘     │     │     │
-        │ read: Actions status,         │     │     │
-        │ Dependabot, edit-hotspot      │     │     │
-        ▼                               │     │     ▼
-  ══════════════════════╗               │     │  ══════════════════════════╗
-  ║ GitHub REST API      ║◄──────────────┘     │  ║ GitHub REST API (write)   ║
-  ║ (real boundary #1)   ║◄─────────────────────┼──║ - this repo               ║
-  ══════════════════════╝                      │  ║ - org2 (counterparty repo)║
-              (2) aisa.ts                       │  ══════════════════════════╝
-        ┌─────────────────────────────────────────┘
-        │ one metered chat/completions call        (3) backlog.ts, on NONE:
-        ▼                                           reads this repo's own plan.md
-  ══════════════════════╗                           for the next open row
-  ║ AIsa api.aisa.one    ║                           (self-referential fallback)
-  ║ (real boundary #2,   ║
-  ║  real $ receipt)     ║
-  ══════════════════════╝
-
-                          (5) checkpoint.ts
-                          ┌─────────────────────────┐
-                          │  Workers KV                │
-                          │  episode history            │
-                          │  /checkpoints, /replay      │
-                          └─────────────────────────┘
-
-  ══════ = a real external system this build does not own (the "boundary")
-
-  Cotal (in progress) — a Tenki sandbox has cotal installed + logged in, ready to
-  publish episode summaries to hack.cotal.ai/graph via scripts/cotal-bridge.sh -
-  blocked on a mesh-operator ACL grant, not on architecture.</pre>
+    <p style="margin:1rem 0 0; color:var(--muted); font-size:0.85rem">
+      Full step-by-step breakdown (file names, and the in-progress Cotal path) lives in the
+      <a href="plans/0001-agent-native-hackathon-submission.md#architecture-detail">plan doc</a> -
+      kept there only, so this page and the plan doc don't drift out of sync with each other again.
+    </p>
   </div>
 
   <div class="card">
