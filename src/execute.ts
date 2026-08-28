@@ -28,6 +28,32 @@ async function safeJson<T>(res: Response): Promise<T | null> {
   }
 }
 
+// The AIsa decision call is stateless (no memory of prior episodes - see
+// README), so on a quiet repo it keeps re-proposing the same underlying
+// observation in different words. Without this check, every episode opened
+// a fresh issue regardless (confirmed live: 20+ near-duplicates piled up).
+// Dedup on the fixed "[idle-discovery]" prefix, not the paraphrased goal
+// text, since exact-title matching would miss the wording variance.
+async function findOpenIdleDiscoveryIssue(
+  owner: string,
+  repo: string,
+  token: string,
+  fetchImpl: typeof fetch,
+): Promise<SingleTargetResult | null> {
+  const q = encodeURIComponent(`repo:${owner}/${repo} is:issue is:open in:title "[idle-discovery]"`);
+  const res = await fetchImpl(`${GITHUB_API}/search/issues?q=${q}`, { headers: ghHeaders(token) });
+  if (!res.ok) return null;
+  const json = await safeJson<{ items?: Array<{ html_url: string; number: number }> }>(res);
+  const existing = json?.items?.[0];
+  if (!existing) return null;
+  return {
+    mode: "existing",
+    issueUrl: existing.html_url,
+    issueNumber: existing.number,
+    detail: `reused already-open issue #${existing.number} on ${owner}/${repo} instead of piling up a duplicate`,
+  };
+}
+
 async function createIssue(
   owner: string,
   repo: string,
@@ -35,6 +61,9 @@ async function createIssue(
   token: string,
   fetchImpl: typeof fetch,
 ): Promise<SingleTargetResult> {
+  const existing = await findOpenIdleDiscoveryIssue(owner, repo, token, fetchImpl);
+  if (existing) return existing;
+
   const title = `[idle-discovery] ${goal}`.slice(0, 250);
   const res = await fetchImpl(`${GITHUB_API}/repos/${owner}/${repo}/issues`, {
     method: "POST",

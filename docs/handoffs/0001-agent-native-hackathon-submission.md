@@ -1,114 +1,50 @@
 # Handoff 0001 — Agent Natives Builders Hackathon submission
 
 Read [`docs/plans/0001-agent-native-hackathon-submission.md`](../plans/0001-agent-native-hackathon-submission.md)
-first — this doc onboards you to *that* plan, doesn't repeat its content.
+first — this doc onboards you to *that* plan, doesn't repeat its content. This handoff was fully
+rewritten after the build shipped; an earlier version describing a pre-build, research-only state
+is gone (it was stale for most of the session — don't trust an older copy of this file if you find
+one elsewhere).
 
-## What shipped this session
+## What shipped
 
-Pure research + documentation. **Zero code.** Two docs remain in `docs/`: `hackathon-brief.md`
-(compiled, source-verified event facts) and `plans/0001-...md` (current design + the single
-remaining-work table). `candidates.md` (original candidate list) was fully superseded and **deleted**
-in a later pass of this session, after re-checking it line-by-line against a fresh first-party
-verification sweep — nothing in it was more accurate than what's now in `plans/0001-...md` or
-`hackathon-brief.md`, and it was untracked (not recoverable via git).
+The idle-discovery loop is live, submitted, and verified end to end: `src/signals.ts` (3 bounded
+GitHub signals) → `src/aisa.ts` (one stateless AIsa decision call) → `src/backlog.ts` (NONE-branch
+fallback reading this repo's own plan) → `src/execute.ts` (real GitHub issue + file writes on this
+repo **and** an independent counterparty repo, `org2`) → `src/checkpoint.ts` (KV history +
+deterministic offline replay). `src/mcp.ts` exposes the same loop as a real MCP JSON-RPC tool.
+`org2` has its own independent GitHub Actions agent (`respond.yml` + `respond.mjs`) reacting to
+incoming requests on its own credential. Submission (`ic_hack_submit`) returned `ok: true` and is
+recorded verbatim in [`docs/submission.md`](../submission.md).
 
-**A later verification pass this session** re-checked every sponsor/vendor claim against first-party
-sources only (rejecting blog posts, Yahoo Finance, Capterra, Toolify, Wikipedia as verification).
-Headline results: Runtype and Mitosis Labs are now independently verified (previously only
-characterized secondhand); Tenki's "Firecracker microVM / sub-2s boot" claim did not survive
-re-verification and was retracted (never stated on tenki.cloud itself); the hackathon page's sponsor
-dollar amounts were all corrected to more precise, currently-live figures; and the "3:00 PM
-Thursday" vs. "today 2026-08-27" deadline framing some earlier notes flagged as worth checking
-turned out to be **fully consistent** (2026-08-27 is a Thursday) — not a real conflict.
+## What's still open
 
-**A live-testing pass, later still, with a real owner-provided AIsa key**: both AIsa payment surfaces
-confirmed genuinely working (Bearer-key chat completions on free-tier models; the x402
-no-registration path returned a real HTTP 402 challenge with real $0.008 USDC terms across 11
-chains). "Private Beta" describes support/maturity, not brokenness — downgrade any earlier note
-calling this an unresolved risk. Full detail in `hackathon-brief.md` and `plans/0001-...md`.
+The plan's remaining-work table is the only list of open items — don't recreate one here. As of
+this rewrite, the one substantive open row is **7a (Cotal)**: a Tenki cloud sandbox has `cotal`
+installed, the `hack` mesh registered, and login succeeded; `scripts/cotal-bridge.sh` is written
+and tested; the only remaining block is a mesh-operator ACL grant this account doesn't have —
+external, not self-serviceable.
 
-**Track decision: RESOLVED — internal chosen.** Liminal-flux idle-discovery pattern (implemented
-fresh, that repo has no running code) + AIsa-metered resource spend as the real-boundary receipt for
-each checkpoint + Cotal-mesh coordination + checkpoint/replay. External is kept documented as a
-fallback, not deleted, since both its AIsa dependencies are confirmed working.
+## Known, accepted rough edges (not bugs to silently fix)
 
-## What's next, in order
-
-1. **All six verification rows (1-6) are now done — nothing left to verify, only to build.**
-   Row 5 (Cotal) had a false-negative mid-session (a render timeout that was just too short) —
-   corrected on retry: `/graph` is public with zero setup, and `/agents` boots a ready-to-go hosted
-   agent in ~2 minutes with no local install. Full detail in plan row 5.
-2. Go straight to row 7 (build) — the remaining-work table is the single source of open work, don't
-   recreate a second list anywhere else.
-3. Rows marked `agent` gate can be picked up and run without waiting on the owner. Rows marked
-   `owner` need a human decision or external action (an email, a deadline check, a submission
-   click) — an agent session should flag these clearly rather than guess past them.
-
-## The loop (track already picked — internal)
-
-1. Build the AIsa-receipt + checkpoint/replay pieces first (fully self-contained, already proven
-   this session), then wire in Cotal via `/agents`' ~2-minute hosted-agent launch (row 5, confirmed
-   working) for the live coordination-visibility layer.
-2. Build the Worker + integrations (row 7). Small, testable increments — given the time pressure
-   this session was under, TDD was explicitly waived for speed; if picked back up under less time
-   pressure, default back to this repo's normal discipline (once one exists — no `AGENTS.md`/
-   `CLAUDE.md` has been written yet either, see watch-outs below).
-3. Rehearse cold (row 8) *before* it matters — "it runs, judge-triggered live" is a hard gate that
-   zeroes the whole score regardless of everything else, confirmed verbatim from the event page.
-4. Register/confirm team (row 9), then submit (row 10). Submission is overwrite-until-lock — submit
-   something early and working, then keep improving it, rather than holding out for a "finished"
-   version that might not land before the lock.
-
-## Owner-gates (batch these, don't trickle-ask)
-
-- **Track decision (plan row 1) — the one thing standing between this handoff and a build starting.**
-  Given how little time is left today, default to picking ONE track / ONE candidate over anything
-  ambitious — the "it runs, judge-triggered live" gate zeroes the score regardless of everything
-  else.
-- ~~Real deadline~~ — resolved: **2026-08-27, 3:00 PM PT / 10:00 PM UTC**, owner-confirmed and
-  independently cross-checked against the event page's own "3:00pm Thursday, August 27" (consistent
-  — 2026-08-27 is a Thursday).
-- AIsa **payment-path** end-to-end test (row 3) if external — sharper than a generic "API call
-  works" check: AIsa's own docs mark Circle Nanopayments/MPP/x402 as Private Beta, so this
-  specifically needs to be proven live, not assumed.
-- Team/registration status — genuinely unknown as of this handoff; "we got enrolled" was the only
-  signal received, never disambiguated into "team exists" vs. "application approved, team still
-  needed."
+- **The AIsa decision call is fully stateless** — no memory of any prior episode, by design (see
+  README's "How it decides" step 2). Because this repo's own `src/` directory has stayed the
+  hottest-edit-frequency path all session (from the build's own commits), repeated live triggers
+  have produced 20+ real but near-duplicate issues on the main repo and 15+ on `org2` — genuine
+  output, not fabricated, but noisy. Flagged to the owner as a judgment call (clean up duplicates
+  vs. leave as evidence); no decision recorded as of this rewrite.
+- Real bugs found via live browser-driven E2E testing (not plain HTTP checks) and already fixed:
+  checkpoint keys sorting non-chronologically, CORS headers missing on uncaught errors, older
+  checkpoints 500ing after a schema change, `GET /mcp` 404ing. See `git log` for the actual PRs.
 
 ## Commands / access notes
 
-- Hackathon page: `https://www.immersivecommons.com/events/hackathon` — re-fetch fresh if picking
-  this up more than a few hours later; event pages like this can and do change during a live event.
-- JS-rendered sponsor pages (e.g. `hack.cotal.ai`) don't render via plain fetch — use
-  `uv run --directory /workspaces/qte77/polyfetch-scrape polyfetch fetch <url> --tier patchright
-  --wait-until networkidle --show-body`. Chromium had to be installed once this session via
-  `polyfetch doctor --fix` (~300MB download) — check it's still present before assuming this works
-  cold.
-- Submission web form (no token needed): `/events/hackathon/apply` off the same domain.
-- Agent-driven submission (optional, not required): `npx -y @immersivecommons/cli auth --scopes
-  hack:read,hack:register,hack:team,hack:submit,keys:request` — **scopes freeze at mint**, request
-  everything needed up front if this path is used at all.
-
-## Watch-outs
-
-- **This repo has no `AGENTS.md`/`CLAUDE.md` yet** — a future session (agent or human) has no
-  standing conventions to follow beyond what's in these two docs. Worth writing one once the track
-  is picked and real code starts, so build discipline doesn't have to be re-derived every session.
-- **`candidates.md` is gone (deleted this session)** — it predated the "no Cloudflare sponsorship"
-  correction and the full AIsa/Tenki/Runtype/Mitosis Labs first-party verification pass, and was
-  confirmed fully superseded before removal. `plans/0001-...md` is the current source of truth;
-  there is no other doc to cross-check against.
-- **Deadline is fixed and confirmed: 2026-08-27, 3:00 PM PT / 10:00 PM UTC**, and independently
-  cross-checked against the event page's own "3:00pm Thursday, August 27" wording (2026-08-27 is a
-  Thursday — no conflict). Still re-derive actual remaining time from the current clock each time
-  work resumes — a fixed deadline doesn't save you from forgetting how much of it is already gone.
-- **AIsa's payment mechanism was live-tested this session with a real, owner-provided key — both
-  surfaces confirmed genuinely working** (Bearer-key chat completions on free-tier models; x402
-  returned a real HTTP 402 challenge with real $0.008 USDC terms across 11 chains). Settlement
-  itself was deliberately not completed — that needs a funded on-chain wallet and a human doing the
-  EIP-712 signing, not an agent. **That test key is rotated/dead by the time you read this** — it
-  was owner-provided, one-time, kept only in `/tmp/aisa_key.env` (never written to this repo), and
-  explicitly flagged for rotation after testing. Get a fresh key before any further AIsa work.
-- **Tenki's sandbox tech is no longer described as Firecracker microVMs with sub-2s boot** — that
-  claim traced only to third-party blogs, not tenki.cloud itself, and was retracted. Don't repeat it
-  in a demo pitch to judges as a vendor-confirmed fact.
+- Live URLs, env vars, and CLI switches are documented in README.md's own tables — don't duplicate
+  them here, they'll drift.
+- Cloudflare secrets: `wrangler secret put GITHUB_TOKEN` / `AISA_API_KEY` — already set on the
+  deployed Worker as of this rewrite.
+- `env -u GH_TOKEN -u GITHUB_TOKEN` prefix needed before any `git push`/`gh` command in this
+  environment — a Codespaces-injected `GITHUB_TOKEN` env var otherwise shadows the real credential
+  and silently 403s pushes.
+- Tenki sandbox (`01a0457e-...`, name `cotal-bridge-persistent`) is real, provisioned cloud infra —
+  `TENKI_API_KEY` lives in local `.dev.vars`, never committed.
