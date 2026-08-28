@@ -128,7 +128,7 @@
     </p>
     <ol class="steps">
       <li>Observes GitHub Actions status, open Dependabot alerts, and edit-frequency hotspots on this repo</li>
-      <li>One AIsa-gated LLM call (<code>qwen-flash</code>) decides a goal or says NONE</li>
+      <li>One AIsa-gated LLM call (<code>qwen-flash</code>) decides a goal or says NONE &mdash; fully stateless, no memory of any prior episode or goal it has proposed before</li>
       <li>NONE falls back to the next open row in the project's own plan — a designed branch, not a failure</li>
       <li>Executes the goal as a real GitHub issue here and on org2 (an independent counterparty repo with its own reactive agent), each read back to confirm it landed</li>
       <li>Writes a checkpoint you can replay offline later, byte-for-byte</li>

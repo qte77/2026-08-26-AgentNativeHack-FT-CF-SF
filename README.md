@@ -34,7 +34,11 @@ npm install && npm run replay
    highest edit frequency in the last 10 commits.
 2. **Decide** — one AIsa-gated LLM call (`qwen-flash`, OpenAI-compatible, `api.aisa.one/v1`)
    is asked for exactly one goal sentence, or `NONE`. That call is the real-boundary receipt:
-   a metered request across an actual external system, captured in the checkpoint.
+   a metered request across an actual external system, captured in the checkpoint. **This call is
+   fully stateless** — the prompt is only the current three signal lines (`src/aisa.ts`); it has no
+   memory of any prior episode, goal, or issue it has ever created. On a quiet repo where the same
+   signal keeps being true, that honestly produces similar goals worded differently each time,
+   rather than an artificially varied or repetition-avoiding output.
 3. **Fall back on purpose** — if nothing live is actionable, that's a designed branch, not a
    failure: the agent reads the next open row from this project's own
    [remaining-work table](docs/plans/0001-agent-native-hackathon-submission.md) and works on
