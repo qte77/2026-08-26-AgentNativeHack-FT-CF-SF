@@ -19,8 +19,10 @@ const AGENT_CARD = {
   name: "agent-native-hack-idle-discovery",
   description:
     "Internal-track submission: an agent that wakes with no queued task, self-selects one goal " +
-    "from bounded live signals via an AIsa-metered call, coordinates over the Cotal mesh, and " +
-    "checkpoints every episode for offline replay.",
+    "from bounded live signals via a stateless AIsa-metered call, executes it as real GitHub " +
+    "writes on this repo and an independent counterparty repo, and checkpoints every episode for " +
+    "offline replay. Cotal mesh coordination is real but not yet live - logged in, ACL-blocked " +
+    "on send pending a mesh-operator grant; not currently coordinating over it.",
   agent_surface: "MCP server",
   endpoints: {
     trigger: "/trigger",

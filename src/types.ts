@@ -35,7 +35,7 @@ export interface CotalResult {
 }
 
 export interface SingleTargetResult {
-  mode: "live" | "no-op";
+  mode: "live" | "existing" | "no-op";
   issueUrl: string | null;
   issueNumber: number | null;
   detail: string;
