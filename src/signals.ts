@@ -122,10 +122,20 @@ export async function fetchEditFrequencySignal(
     }
   }
   const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  const top = sorted[0];
+  // Below this, "hottest path" fired on literally every commit (a path
+  // touched once still "wins"), which made this signal always read as
+  // actionable to the live AIsa call and made the NONE branch unreachable
+  // (14/14 live episodes picked a goal - see the hackathon organizer's
+  // judge feedback). Reporting the honest "nothing stands out" case below
+  // the threshold is what makes NONE a real, reachable outcome again.
+  const HOTSPOT_MIN_TOUCHES = 3;
   const summary =
-    sorted.length === 0
+    !top
       ? "no recent file-level edit data"
-      : `hottest path in last ${commits.length} commits: "${sorted[0][0]}" (${sorted[0][1]} touches)`;
+      : top[1] >= HOTSPOT_MIN_TOUCHES
+        ? `hottest path in last ${commits.length} commits: "${top[0]}" (${top[1]} touches)`
+        : `no concentrated edit activity in last ${commits.length} commits (touches spread across ${sorted.length} path(s), highest: ${top[1]})`;
   return { source: "edit_frequency", summary, data: sorted };
 }
 
