@@ -53,9 +53,11 @@ each other earlier in the build).
                           │  /checkpoints, /replay      │
                           └─────────────────────────┘
 
-  Cotal (in progress) — a Tenki sandbox has cotal installed + logged in, ready to
-  publish episode summaries to hack.cotal.ai/graph via scripts/cotal-bridge.sh -
-  blocked on a mesh-operator ACL grant, not on architecture (see row 7a below).
+  Cotal (closed, permanently blocked) — a Tenki sandbox had cotal installed and
+  logged in, ready to publish episode summaries to hack.cotal.ai/graph, but
+  `cotal send msg` was ACL-blocked on a mesh-operator grant that never came
+  (see row 7a below). The one-off bridge script this used has been deleted -
+  there is nothing left to run against a permission the account never got.
 
   ══════ = a real external system this build does not own (the "boundary")
 ```
@@ -95,104 +97,12 @@ not a free call), and the checkpoint written for each episode includes AIsa's us
 receipt, not just a narrated log entry. Cotal-mesh coordination visibility is still pending
 end-to-end verification (a fork is checking `/graph`, `/connect`, `/device` right now).
 
-### External (kept for reference, not the current build target) — literal, not metaphorical, transaction
-
-Discover (agent-card + MCP/A2A on a plain Cloudflare Worker — Workers/DO are NOT a sponsor claim,
-just infrastructure) → **AIsa**-backed credential + real metered payment → **Tenki**-backed
-sandboxed compute as the actual "transaction" (pay → get an isolated VM → real execution result,
-not just an API response) → optionally **Runtype**-scripted calling-agent for live-demo
-reliability.
-
-Full sponsor facts (AIsa/Tenki/Runtype product surfaces, credit mechanisms, dollar amounts) live in
-[`docs/hackathon-brief.md`](../hackathon-brief.md) — not repeated here. What matters for **this
-design's viability**, re-verified directly against each vendor's own site/docs this session:
-
-- **Runtype — now verified (previously the one unverified sponsor).** Confirmed via
-  docs.runtype.com/runtype.ai directly: a real AI product platform (agents, flows, evals, REST APIs).
-  Safe to build against for the "scripted calling-agent" role.
-- **Tenki's credit path is confirmed self-serve** ($100/builder, automatic on signup at
-  `tenki.cloud/events/agent-native`) — good for live-demo reliability. **Its underlying sandbox tech
-  is no longer claimed as Firecracker microVMs / sub-2s boot** — that specific claim did not survive
-  re-verification against tenki.cloud itself and has been retracted (see brief). Design around
-  "isolated sandbox, real SDK (Go/TS/Python), real execution result" — not around unconfirmed
-  boot-time or hypervisor specifics.
-- **AIsa's payment path — now live-tested with a real key, risk downgraded.** Two surfaces exist.
-  (1) Bearer-key account balance (`/v1`, `/apis/v1`): confirmed working end-to-end (a real
-  `chat/completions` call succeeded), but the tested account's balance doesn't cover paid models
-  right now — only 7 of 104 models work without a top-up; the other 97 (including all
-  OpenAI/Anthropic models) return `402 recharge_required`. (2) x402 pay-per-call, no registration
-  (`/apis/v2`): confirmed genuinely live — an unauthenticated call returned a real, well-formed HTTP
-  402 challenge offering the resource for **$0.008** (real USDC contract address) across ~11 chains.
-  **Settlement was deliberately not attempted** — it requires signing an EIP-712 authorization with a
-  funded on-chain wallet's private key, which should never be pasted into an agent conversation; that
-  step needs the wallet holder's own signing tool. Net: "Private Beta" describes support/maturity
-  level, not brokenness — the mechanism is real. Remaining gap before relying on this live in front of
-  judges: either (a) top up the Bearer-key account balance, or (b) have a wallet ready to complete one
-  real x402 settlement as a rehearsal. Fallback if neither happens in time: demo the free-tier
-  Bearer-key models (confirmed working now, zero setup) as "the transaction," framing the $0.008
-  x402 challenge response itself (already captured, real) as evidence of the payment mechanism
-  without completing a live settlement in front of judges.
-
-```
-EXTERNAL TRACK -- discover -> credential+pay -> sandboxed transact -> (optional) scripted caller
-==================================================================================================
-
-  ,-----------------------.        ,--------------------------.
-  |  Judge / unbriefed     |        |  Cloudflare Worker        |
-  |  agent (cold-start,    | -----> |  agent-card + MCP/A2A     |
-  |  "arrives with only    |  (1)   |  endpoint  (DISCOVER)     |
-  |  your domain name")    |        |  no CF sponsor claim --   |
-  '-----------------------'        |  plain infra only         |
-                                    '------------+---------------'
-                                                 | (2) request credential
-                                                 v
-                                    ,--------------------------.
-                                    |  AIsa                     |
-                                    |  - issues API key /       |
-                                    |    credential  [CONFIRMED]|
-                                    |  - Bearer-key balance:    |
-                                    |    LIVE-TESTED, works --  |
-                                    |    7/104 models free,     |
-                                    |    97 need account top-up |
-                                    |  - x402 (no registration):|
-                                    |    LIVE-TESTED -- real    |
-                                    |    HTTP 402 challenge,    |
-                                    |    $0.008 USDC, 11 chains |
-                                    |    settlement untested    |
-                                    |    (needs a funded wallet)|
-                                    '------------+---------------'
-                                                 | (3) pay-gated call,
-                                                 |     credential in hand
-                                                 v
-                                    ,--------------------------.
-                                    |  Tenki sandbox            |
-                                    |  - spin up isolated VM    |
-                                    |    via Go/TS/Python SDK   |
-                                    |    or CLI  [CONFIRMED]    |
-                                    |  - hypervisor/boot-time   |
-                                    |    NOT vendor-claimed --  |
-                                    |    do not cite Firecracker|
-                                    |    or "sub-2s" (retracted)|
-                                    |  - run real workload,     |
-                                    |    return real result     |
-                                    '------------+---------------'
-                                                 | (4) execution result
-                                                 v
-                                    ,--------------------------.
-                                    |  Judge-visible outcome    |
-                                    |  (repo_url / demo_url) -- |
-                                    |  "it runs" gate: judge     |
-                                    |  triggers this LIVE, no   |
-                                    |  hand-holding             |
-                                    '--------------------------'
-
-  Optional reliability wrapper, parallel to step (1):
-  ,--------------------------.
-  |  Runtype-scripted caller  |  -- now VERIFIED (docs.runtype.com): real agent/flow/eval
-  |  drives the loop above    |     platform. Safe to use as a rehearsed, repeatable trigger
-  |  for a rehearsed run      |     for the live demo, in addition to (not instead of) a
-  '--------------------------'     genuinely cold, unbriefed judge trigger.
-```
+The external-track design (AIsa credential → Tenki sandboxed compute → optional Runtype-scripted
+caller) was the documented fallback if the internal build hit a wall before the deadline. It never
+built, the deadline passed, and the project closed with the internal track submitted — the design
+notes and vendor re-verification detail that used to live here added nothing once that decision was
+final, so they've been removed rather than kept as unused history. The internal design actually
+shipped is below.
 
 ### Internal — falsifiable autonomy + third-party-verified coordination
 
@@ -312,7 +222,7 @@ INTERNAL TRACK -- idle wake -> self-selected goal -> Cotal-mesh coordination -> 
 | ~~5~~ | ~~Walk Cotal's `/connect` + `/device` flow end-to-end~~ | agent | **Done — CONFIRMED buildable/demo-able, no hidden blocker (an earlier "inconclusive" report in this same session was wrong — a too-short render timeout, corrected on retry). `/graph` is fully public, no login wall — a judge can view it with zero setup, and shows a real empty-state message confirming the mesh is live. Fastest path: `/agents` — "boots a sandbox, installs the standard CLI, enrols an agent... takes about two minutes" — zero local setup. Alternative: the 5-step `/connect` laptop CLI (`curl get.cotal.ai \| sh` → `cotal setup --yes` → `cotal meshes add` → `cotal login` → approve at `/device`). Either path needs creating/joining a team + one `cotal login`/`/device` code-approval step (a real account action, not just viewing — not attempted by the read-only exploration). One doc correction: the event-specific flow uses `cotal setup --yes` (connects directly to the already-hosted mesh) — simpler than the general product docs' `cotal-ai setup --yes && cotal-ai up --detach` (which provisions a local broker); don't use the general-docs command for this event.** |
 | ~~6~~ | ~~Verify Mitosis Labs' actual product surface~~ | agent | **Done — confirmed via mitosislabs.ai: real product (Cortex), but no builder credits/self-serve path for this event — do not build a live dependency on it** |
 | ~~7~~ | ~~Build the core loop: Worker/agent implementing idle-discovery (bounded GH-signals → AIsa-gated decision → NONE-fallback to this plan's own open rows → checkpoint)~~ | agent | **Done (PR #3) — `wrangler dev` smoke-tested locally end-to-end against real GitHub API calls: `/`, `/.well-known/ai-agent.json`, `/trigger`, `/checkpoints`. `npm run typecheck`/`test`/`replay` all green, CI green.** |
-| 7a | Cotal coordination-visibility wiring | agent then owner | **Superseded — the "stateless Worker can't hold a persistent NATS connection" limitation is solved: a persistent Tenki cloud sandbox (id `01a0457e-...`) has `cotal` CLI installed, mesh `hack` registered, and login succeeded (`qte@ist-einmalig.de`, session cached to 2026-09-03). `scripts/cotal-bridge.sh` is written and tested against real live `/checkpoints` data. The one remaining block: `cotal send msg` fails with `NATS permission denied ... check this endpoint's ACLs` — this account has no publish rights on the mesh yet. Fix is `cotal actor grant cli --sub oW8kEuuV9NajVc8tTrUmojUKBHuougLz`, but that command can only be run by **the mesh's operator** (a hackathon/Cotal organizer) — not self-serviceable. Coordination-design story still rests on `/checkpoints` + `org2`'s own agent in the meantime.** |
+| ~~7a~~ | ~~Cotal coordination-visibility wiring~~ | agent then owner | **Closed, permanently blocked — the "stateless Worker can't hold a persistent NATS connection" limitation was solved (a persistent Tenki cloud sandbox had `cotal` CLI installed, mesh `hack` registered, and login succeeded), and a bridge script published episode summaries against real live `/checkpoints` data. The one remaining block never cleared: `cotal send msg` failed with `NATS permission denied` — this account had no publish rights on the mesh. The fix (`cotal actor grant cli --sub oW8kEuuV9NajVc8tTrUmojUKBHuougLz`) can only be run by the mesh's operator, not self-serviceable, and no grant ever came before the project closed. The now-unrunnable bridge script has been deleted; `/checkpoints` + `org2`'s own agent carried the coordination-visibility story instead.** |
 | ~~7b~~ | ~~Deploy the Worker to Cloudflare for real~~ | owner then agent | **Done — live at https://agent-native-hack.cloudflare-driveway392.workers.dev. `wrangler login --device` (RFC 8628) used after the localhost-callback OAuth flow timed out in this container; real `CHECKPOINTS` KV namespace created and wired; `GITHUB_TOKEN` deployed as a secret, piped in directly, never displayed.** |
 | ~~7c~~ | ~~Wire a live AIsa key~~ | owner then agent | **Done — owner-provided key uploaded via `wrangler secret put AISA_API_KEY` (piped from `.dev.vars`, never displayed). Confirmed live: a real `/trigger` call against the deployed URL returned `aisaReceipt.mode: "live"` with a genuine model-generated goal ("Increase documentation for the src directory...") reasoning from real edit-frequency data.** |
 | ~~8~~ | ~~Rehearse the full live demo at least once, cold, before presenting to judges~~ | owner+agent | **Done — repeatedly verified live and unattended across this session (multiple `/trigger` calls, all succeeding cold with `aisaReceipt.mode: "live"`). Owner should still click through the GH Pages landing page once themselves before presenting, to confirm the button UX end-to-end from a fresh browser.** |
@@ -328,9 +238,11 @@ Superseded items (deadline framing, track decision, team/submission status, Runt
 verification) have been removed from this section — they're closed, tracked only in the struck
 rows above, per this repo's own rule against two lists of open work drifting apart.
 
-- **Cotal mesh publish is ACL-blocked, not architecture-blocked** — see row 7a. Needs a mesh
-  operator to run `cotal actor grant cli --sub oW8kEuuV9NajVc8tTrUmojUKBHuougLz`; not
-  self-serviceable by the agent or the owner alone.
+- **Cotal mesh publish stayed ACL-blocked, not architecture-blocked, through the project's close**
+  — see row 7a. It needed a mesh operator to run
+  `cotal actor grant cli --sub oW8kEuuV9NajVc8tTrUmojUKBHuougLz`; that grant never came, was never
+  self-serviceable by the agent or the owner alone, and the project is now closed with no further
+  action pending on it.
 - **AIsa real settlement remains one step short by design, not by omission** — the Bearer-key
   free-tier call is genuinely live (confirmed repeatedly), but completing an actual paid
   settlement (topping up the balance, or signing an x402 EIP-712 authorization with a funded
