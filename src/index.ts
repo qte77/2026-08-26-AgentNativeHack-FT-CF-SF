@@ -1,6 +1,7 @@
 import { runEpisode } from "./episode";
 import { writeCheckpoint, readCheckpoint, listCheckpointIds, renderEpisode } from "./checkpoint";
 import { handleMcp } from "./mcp";
+import { checkTriggerRateLimit } from "./ratelimit";
 import type { Env } from "./types";
 
 function json(data: unknown, status = 200): Response {
@@ -86,6 +87,19 @@ async function route(request: Request, env: Env): Promise<Response> {
     }
 
     if (url.pathname === "/trigger" && (request.method === "GET" || request.method === "POST")) {
+      const rateLimit = await checkTriggerRateLimit(env.CHECKPOINTS);
+      if (!rateLimit.allowed) {
+        return json(
+          {
+            error: "rate limited",
+            detail:
+              `/trigger is capped at ${rateLimit.limit} runs/hour to bound AIsa-balance spend on ` +
+              "this public, unauthenticated endpoint - try again next hour, or run `npm run " +
+              "replay` for an offline pass with no live calls.",
+          },
+          429,
+        );
+      }
       const id = crypto.randomUUID();
       const startedAt = new Date().toISOString();
       const episode = await runEpisode({ id, startedAt, env });
