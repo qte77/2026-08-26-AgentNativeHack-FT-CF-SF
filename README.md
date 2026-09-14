@@ -58,12 +58,12 @@ Other agents can plug in directly at `/mcp` (JSON-RPC 2.0: `initialize`, `tools/
 `tools/call`) instead of only clicking a button — `run_idle_discovery_episode` is a real callable
 tool, discoverable with no auth or setup.
 
-Cotal mesh coordination is a documented no-op in the Worker itself, but real progress exists
-outside it: a persistent Tenki cloud sandbox has `cotal` installed, the `hack` mesh registered, and
-login succeeded — `cotal send msg` is written and tested (`scripts/cotal-bridge.sh`), but blocked
-on a mesh-operator ACL grant this account doesn't have yet. Not an architecture limit anymore, a
-permissions one. `/checkpoints` plus `org2`'s own reactive agent carry the coordination-visibility
-story in the meantime. Full detail: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-submission.md) row 7a.
+Cotal mesh coordination stayed a documented no-op in the Worker itself. It got further than that
+alone suggests — a persistent Tenki cloud sandbox had `cotal` installed, the `hack` mesh
+registered, and login succeeded — but `cotal send msg` was permanently blocked on a mesh-operator
+ACL grant this account never received. Not an architecture limit, a permissions one that never
+cleared before the project closed. `/checkpoints` plus `org2`'s own reactive agent carried the
+coordination-visibility story instead. Full detail: [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-submission.md) row 7a.
 
 ## Architecture
 
