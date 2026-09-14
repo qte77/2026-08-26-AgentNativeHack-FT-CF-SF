@@ -4,6 +4,19 @@ An agent that wakes with no queued task, self-selects **one** concrete goal from
 bounded set of live signals, and checkpoints the episode so it can pick the job back up
 tomorrow where it left off today.
 
+## Result
+
+**Internal track Runner-up.** Team `nolim`, mean score 66.63/100 across 8 judges — rank 12 of 22
+teams overall (internal-track winner Climatico scored 73.25; overall event leader Showtonic scored
+81). Full judge feedback lives in [`docs/plans/0001-...md`](docs/plans/0001-agent-native-hackathon-submission.md).
+Judging closed before these could affect the score, but two of the harder findings got shipped as
+real fixes anyway, because the code stayed live and the fix was cheap: the AIsa decision call's
+`NONE` branch was structurally unreachable (14/14 live episodes picked a goal — fixed by raising
+the edit-frequency hotspot threshold so a genuinely quiet repo can produce `NONE`), and `/trigger`
+was an unauthenticated public endpoint with no spend cap (fixed with a 10-runs/hour rate limit).
+The Cotal mesh-coordination attempt stayed permanently ACL-blocked — see "Known blockers" in the
+plan doc.
+
 ## Try it live
 
 | | URL |
