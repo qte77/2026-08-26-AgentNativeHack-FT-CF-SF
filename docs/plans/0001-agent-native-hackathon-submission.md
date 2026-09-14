@@ -1,5 +1,17 @@
 # Plan 0001 — Agent Natives Builders Hackathon submission
 
+**Result — closed.** Internal track Runner-up, team `nolim`, mean score 66.63/100 across 8 judges
+(rank 12 of 22 teams overall; internal-track winner Climatico scored 73.25; overall event leader
+Showtonic scored 81) — verified live against `ic_hack_results`/`ic_hack_my_feedback`, not assumed.
+Full judge feedback (8 entries, including an organizer evidence audit) informed the three fixes
+shipped after judging closed: the AIsa decision's `NONE` branch was structurally unreachable
+(14/14 live episodes picked a goal — fixed in `src/signals.ts`), `/trigger` was an unauthenticated
+public endpoint with no spend cap (fixed with a KV-backed hourly rate limit in `src/ratelimit.ts`),
+and the now-permanently-blocked Cotal bridge script was removed as dead code (see row 7a). These
+could not change the score — judging was already final — but the code stayed live, so they were
+worth shipping for real rather than only noting in this doc. Nothing further is planned; the
+project is closed.
+
 **Live deployment (matches the actual submitted `ic_hack_submit` state — see
 [`docs/submission.md`](../submission.md) for the captured API response):**
 `demo_url` = `https://qte77.github.io/2026-08-26-AgentNativeHack-FT-CF-SF/` (landing page; the
