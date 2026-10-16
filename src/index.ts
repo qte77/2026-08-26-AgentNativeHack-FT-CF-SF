@@ -32,13 +32,19 @@ const AGENT_CARD = {
     mcp: "/mcp",
   },
   mcp: {
-    url: "https://agent-native-hack.cloudflare-driveway392.workers.dev/mcp",
+    url: "/mcp", // same-origin; filled in as an absolute URL per-request via agentCard() below
     transport: "json-rpc-2.0-over-http",
     tools: ["run_idle_discovery_episode"],
   },
   track: "internal",
   repo: "https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF",
 };
+
+// The agent card's `mcp.url` must be a self-reference, so it's derived from the request's own
+// origin rather than a hardcoded host - the card stays correct under any deploy target.
+function agentCard(origin: string) {
+  return { ...AGENT_CARD, mcp: { ...AGENT_CARD.mcp, url: origin + "/mcp" } };
+}
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -58,12 +64,12 @@ async function route(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === "/.well-known/ai-agent.json") {
-      return json(AGENT_CARD);
+      return json(agentCard(url.origin));
     }
 
     if (url.pathname === "/" ) {
       return json({
-        ...AGENT_CARD,
+        ...agentCard(url.origin),
         hint: "GET or POST /trigger to run one live episode. It runs the real signal-collection, " +
           "AIsa-decision, and checkpoint-write path - judge-triggerable, no hand-holding.",
       });

@@ -22,16 +22,16 @@ plan doc.
 | | URL |
 |---|---|
 | Landing page (demo entrypoint) | https://qte77.github.io/2026-08-26-AgentNativeHack-FT-CF-SF/ |
-| Worker (live episode) | https://agent-native-hack.cloudflare-driveway392.workers.dev/trigger |
-| Agent card | https://agent-native-hack.cloudflare-driveway392.workers.dev/.well-known/ai-agent.json |
-| Checkpoint feed | https://agent-native-hack.cloudflare-driveway392.workers.dev/checkpoints |
-| MCP server (agent plug-in) | https://agent-native-hack.cloudflare-driveway392.workers.dev/mcp |
+| Worker (live episode) | Decommissioned 2026-10-15 — no longer hosted |
+| Agent card | Decommissioned 2026-10-15 — no longer hosted |
+| Checkpoint feed | Decommissioned 2026-10-15 — no longer hosted |
+| MCP server (agent plug-in) | Decommissioned 2026-10-15 — no longer hosted |
 | Counterparty repo (org2) | https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2 |
 
-Click the landing page's button, or `GET /trigger` directly — either runs one full episode
-against real signals, right now, with no setup. That's the "it runs" gate: an unbriefed judge
-can hit this and watch it happen. The landing page is static (GitHub Pages) and calls the Worker
-client-side; it doesn't replace it.
+The landing page's button and `GET /trigger` used to run one full episode against real signals,
+live — that was the "it runs" gate so an unbriefed judge could hit it and watch it happen. The
+Worker backing that demo was decommissioned on 2026-10-15; the landing page now shows a
+decommission notice instead of calling it.
 
 No live deploy URL yet? Reproduce a committed episode deterministically, offline, no network:
 

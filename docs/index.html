@@ -134,8 +134,9 @@
 
   <div class="card">
     <p style="margin-top:0">
-      This is a live judge-triggerable demo. Click the button below and the browser calls the
-      real deployed Worker directly — no server-side proxy, nothing pre-recorded.
+      This used to be a live judge-triggerable demo: the browser called the real deployed Worker
+      directly, no server-side proxy, nothing pre-recorded. The Worker was decommissioned on
+      2026-10-15 — the buttons below now show that instead of calling it.
     </p>
     <ol class="steps">
       <li>Observes GitHub Actions status, open Dependabot alerts, and edit-frequency hotspots on this repo</li>
@@ -163,18 +164,17 @@
     <div class="links">
       <a href="https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF" target="_blank" rel="noopener">Source repo</a>
       <a href="https://github.com/qte77/2026-08-26-AgentNativeHack-FT-CF-SF-org2" target="_blank" rel="noopener">Counterparty repo (org2)</a>
-      <a href="https://agent-native-hack.cloudflare-driveway392.workers.dev/.well-known/ai-agent.json" target="_blank" rel="noopener">Agent card</a>
-      <a href="https://agent-native-hack.cloudflare-driveway392.workers.dev/mcp" target="_blank" rel="noopener">MCP server</a>
-      <a href="https://agent-native-hack.cloudflare-driveway392.workers.dev/checkpoints" target="_blank" rel="noopener">Raw checkpoint feed</a>
+      <span>Agent card — decommissioned 2026-10-15</span>
+      <span>MCP server — decommissioned 2026-10-15</span>
+      <span>Raw checkpoint feed — decommissioned 2026-10-15</span>
       <a href="plans/0001-agent-native-hackathon-submission.md" target="_blank" rel="noopener">Design + open-work plan</a>
     </div>
   </div>
 </main>
 
 <script>
-  const WORKER = "https://agent-native-hack.cloudflare-driveway392.workers.dev";
+  const DECOMMISSIONED = "This hosted demo was decommissioned on 2026-10-15 - run `npm run replay` for an offline pass instead.";
   const statusEl = document.getElementById("status");
-  const outputEl = document.getElementById("output");
   const triggerBtn = document.getElementById("trigger");
   const listBtn = document.getElementById("list");
 
@@ -183,57 +183,16 @@
     statusEl.className = "status" + (isError ? " error" : "");
   }
 
-  async function run(btn, path, render) {
-    btn.disabled = true;
-    outputEl.style.display = "none";
-    setStatus("calling " + path + " ...");
-    try {
-      const res = await fetch(WORKER + path);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      outputEl.textContent = render(data);
-      outputEl.style.display = "block";
-      setStatus("done - " + new Date().toLocaleTimeString());
-    } catch (err) {
-      setStatus("failed: " + err.message, true);
-    } finally {
-      btn.disabled = false;
-    }
+  function run() {
+    setStatus(DECOMMISSIONED, true);
   }
 
-  triggerBtn.addEventListener("click", () =>
-    run(triggerBtn, "/trigger", (data) => data.rendered).then(loadTimeline)
-  );
-  listBtn.addEventListener("click", () =>
-    run(listBtn, "/checkpoints", (data) => JSON.stringify(data, null, 2))
-  );
+  triggerBtn.addEventListener("click", run);
+  listBtn.addEventListener("click", run);
 
-  async function loadTimeline() {
+  function loadTimeline() {
     const timelineEl = document.getElementById("timeline");
-    try {
-      const listRes = await fetch(WORKER + "/checkpoints");
-      const { ids } = await listRes.json();
-      const recent = ids.slice(-8).reverse();
-      if (recent.length === 0) {
-        timelineEl.innerHTML = "<li>no episodes yet — click \"Run a live episode\" above</li>";
-        return;
-      }
-      const episodes = await Promise.all(
-        recent.map((id) => fetch(WORKER + "/checkpoints/" + id).then((r) => r.json()))
-      );
-      const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-      }[c]));
-      timelineEl.innerHTML = episodes
-        .map(({ episode }) => {
-          const when = new Date(episode.startedAt).toLocaleString();
-          const source = episode.decision.source === "aisa" ? "AIsa decision" : "backlog fallback";
-          return `<li>${esc(when)} — <span class="goal">${esc(episode.decision.goal)}</span> <em>(${esc(source)})</em></li>`;
-        })
-        .join("");
-    } catch (err) {
-      timelineEl.innerHTML = "<li>failed to load: " + err.message + "</li>";
-    }
+    timelineEl.innerHTML = "<li>" + DECOMMISSIONED + "</li>";
   }
   loadTimeline();
 </script>
