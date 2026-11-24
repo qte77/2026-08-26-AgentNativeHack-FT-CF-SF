@@ -162,3 +162,7 @@ containers/remote sessions where the localhost OAuth callback can't be reached).
 - [`docs/hackathon-brief.md`](docs/hackathon-brief.md) — compiled, source-verified event research
 - [`docs/plans/0001-agent-native-hackathon-submission.md`](docs/plans/0001-agent-native-hackathon-submission.md) — design + the single remaining-work table
 - [`docs/handoffs/0001-agent-native-hackathon-submission.md`](docs/handoffs/0001-agent-native-hackathon-submission.md) — session handoff
+
+## License
+
+[Apache-2.0](LICENSE).
